@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>shaders/yuv420p.vert</file>
+        <file>shaders/yuv420p_desktop.frag</file>
+        <file>shaders/yuv420p_es.frag</file>
+    </qresource>
+</RCC>
