@@ -13,7 +13,7 @@ public:
     virtual ~VideoWidget();
 
 public slots:
-    void OnFrameRender(Yuv420pFrame* frame);
+    void OnFrameRender(Yuv420p* frame);
 
 protected:
     void initializeGL() override;
@@ -23,7 +23,7 @@ protected:
 private:
     QOpenGLShaderProgram program_;
     GLuint idy_, idu_, idv_;
-    Yuv420pFrame* frame_;
+    Yuv420p* frame_;
 };
 
 #endif // VIDEO_WIDGET_H

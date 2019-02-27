@@ -50,7 +50,7 @@ struct Plane
     }
 };
 
-struct Yuv420pFrame
+struct Yuv420p
 {
     int flv_tag_idx;
     int pts;
@@ -58,13 +58,13 @@ struct Yuv420pFrame
     Plane u;
     Plane v;
 
-    Yuv420pFrame() : y(), u(), v()
+    Yuv420p() : y(), u(), v()
     {
         this->flv_tag_idx = -1;
         this->pts = 0;
     }
 
-    ~Yuv420pFrame()
+    ~Yuv420p()
     {
         this->y.Release();
         this->u.Release();

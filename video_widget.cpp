@@ -25,7 +25,7 @@ VideoWidget::~VideoWidget()
 {
 }
 
-void VideoWidget::OnFrameRender(Yuv420pFrame* frame)
+void VideoWidget::OnFrameRender(Yuv420p* frame)
 {
     frame_ = frame;
     update();
