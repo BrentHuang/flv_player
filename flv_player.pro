@@ -54,30 +54,46 @@ unix:!macx {
         -L$${THIRD_PARTY_INSTALL_PREFIX}/sdl/lib -lSDL2
 }
 SOURCES += \
-        main.cpp \
-        mainwindow.cpp \
-    h264_decoder.cpp \
-    aac_decoder.cpp \
-    script_tag.cpp \
-    audio_tag.cpp \
-    video_tag.cpp \
-    flv_parser.cpp \
+    main.cpp \
+    mainwindow.cpp \
+    signal_center.cpp \
+    video_widget.cpp \
     pcm_player.cpp \
     yuv420p_player.cpp \
-    video_widget.cpp
+    file/file_parsers.cpp \
+    file/flv/flv_base.cpp \
+    file/flv/flv_parser.cpp \
+    file/flv/metadata_tag.cpp \
+    file/flv/audio_tag.cpp \
+    file/flv/video_tag.cpp \
+    audio/audio_decoders.cpp \
+    audio/aac/aac_decoder.cpp \
+    audio/aac/fdkaac_dec.cpp \
+    video/video_decoders.cpp \
+    video/h264/h264_decoder.cpp \
+    pcm_device.cpp
 
 HEADERS += \
-        mainwindow.h \
+    mainwindow.h \
+    byte_util.h \
+    singleton.h \
+    signal_center.h \
     yuv420p.h \
-    h264_decoder.h \
-    aac_decoder.h \
-    script_tag.h \
-    audio_tag.h \
-    video_tag.h \
-    flv_parser.h \
-    pcm_player.h \
+    pcm.h \
+    video_widget.h \
     yuv420p_player.h \
-    video_widget.h
+    pcm_player.h \
+    file/file_parsers.h \
+    file/flv/flv_base.h \
+    file/flv/flv_parser.h \
+    file/flv/metadata_tag.h \
+    file/flv/audio_tag.h \
+    file/flv/video_tag.h \
+    audio/audio_decoders.h \
+    audio/aac/aac_decoder.h \
+    video/video_decoders.h \
+    video/h264/h264_decoder.h \
+    pcm_device.h
 
 FORMS += \
         mainwindow.ui

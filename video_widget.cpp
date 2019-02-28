@@ -1,4 +1,5 @@
 #include "video_widget.h"
+#include <QThread>
 
 static const GLfloat vertex_vertices[] =
 {
@@ -16,18 +17,17 @@ static const GLfloat texture_vertices[] =
     1.0f,  0.0f
 };
 
-VideoWidget::VideoWidget()
+VideoWidget::VideoWidget() : yuv420p_()
 {
-    frame_ = NULL;
 }
 
 VideoWidget::~VideoWidget()
 {
 }
 
-void VideoWidget::OnFrameRender(Yuv420p* frame)
+void VideoWidget::OnYuv420pPlay(std::shared_ptr<Yuv420p> yuv420p)
 {
-    frame_ = frame;
+    yuv420p_ = yuv420p;
     update();
 }
 
@@ -88,10 +88,12 @@ void VideoWidget::resizeGL(int w, int h)
 
 void VideoWidget::paintGL()
 {
-    if (NULL == frame_)
+    if (nullptr == yuv420p_)
     {
         return;
     }
+
+    Yuv420p* yuv420p = yuv420p_.get();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -106,7 +108,7 @@ void VideoWidget::paintGL()
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, idy_);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, frame_->y.width, frame_->y.height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame_->y.data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, yuv420p->y.width, yuv420p->y.height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, yuv420p->y.data.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -114,7 +116,7 @@ void VideoWidget::paintGL()
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, idu_);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, frame_->u.width, frame_->u.height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame_->u.data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, yuv420p->u.width, yuv420p->u.height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, yuv420p->u.data.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -122,7 +124,7 @@ void VideoWidget::paintGL()
 
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, idv_);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, frame_->v.width, frame_->v.height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame_->v.data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, yuv420p->v.width, yuv420p->v.height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, yuv420p->v.data.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -137,4 +139,5 @@ void VideoWidget::paintGL()
     program_.disableAttributeArray("textureIn");
 
     program_.release();
+    yuv420p_.reset();
 }

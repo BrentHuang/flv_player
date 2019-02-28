@@ -2,9 +2,10 @@
 #define YUV420P_PLAYER_H
 
 #include <memory>
+#include <list>
 #include <QObject>
 #include <QTimer>
-#include "video_widget.h"
+#include "yuv420p.h"
 
 class Yuv420pPlayer : public QObject
 {
@@ -14,17 +15,16 @@ public:
     Yuv420pPlayer();
     virtual ~Yuv420pPlayer();
 
-    std::shared_ptr<VideoWidget> GetVideoWidget()
-    {
-        return video_widget_;
-    }
+public slots:
+    void OnYuv420pReady(std::shared_ptr<Yuv420p> yuv420p);
 
 private slots:
     void OnTimer();
 
 private:
-    std::shared_ptr<VideoWidget> video_widget_;
     std::unique_ptr<QTimer> timer_;
+    typedef std::list<std::shared_ptr<Yuv420p>> Yuv420pList;
+    Yuv420pList yuv420p_list_;
 };
 
 #endif // YUV420P_PLAYER_H

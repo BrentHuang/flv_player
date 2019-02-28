@@ -1,10 +1,8 @@
 #include "mainwindow.h"
+#include <QFileDialog>
 #include <QMessageBox>
 #include "ui_mainwindow.h"
-#include "flv_parser.h"
-#include "aac_decoder.h"
-#include "h264_decoder.h"
-#include "pcm_player.h"
+#include "signal_center.h"
 
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent),
@@ -14,12 +12,13 @@ MainWindow::MainWindow(QWidget* parent) :
 
     video_widget_.reset(new VideoWidget());
     this->setCentralWidget(video_widget_.get());
+
+    StartThreads();
 }
 
 MainWindow::~MainWindow()
 {
-    StopThreads();
-
+    StopThreads(); // 停止所有子线程
     delete ui;
 }
 
@@ -37,46 +36,67 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
 void MainWindow::StartThreads()
 {
-    FlvParser* flv_parser = new FlvParser();
-    flv_parser->moveToThread(&flv_parser_thread_);
-    connect(&flv_parser_thread_, SIGNAL(finished()), flv_parser, SLOT(deleteLater()));
+    file_parsers_ = new FileParsers();
+    file_parsers_->moveToThread(&file_parse_thread_);
+    connect(&file_parse_thread_, SIGNAL(finished()), file_parsers_, SLOT(deleteLater()));
 
-    AacDecoder* aac_decoder = new AacDecoder();
-    aac_decoder->moveToThread(&aac_decode_thread_);
-    connect(&aac_decode_thread_, SIGNAL(finished()), aac_decoder, SLOT(deleteLater()));
+    audio_decoders_ = new AudioDecoders();
+    audio_decoders_->moveToThread(&audio_decode_thread_);
+    connect(&audio_decode_thread_, SIGNAL(finished()), audio_decoders_, SLOT(deleteLater()));
 
-    H264Decoder* h264_decoder = new H264Decoder();
-    h264_decoder->moveToThread(&h264_decode_thread_);
-    connect(&h264_decode_thread_, SIGNAL(finished()), h264_decoder, SLOT(deleteLater()));
+    video_decoders_ = new VideoDecoders();
+    video_decoders_->moveToThread(&video_decode_thread_);
+    connect(&video_decode_thread_, SIGNAL(finished()), video_decoders_, SLOT(deleteLater()));
 
-    PcmPlayer* pcm_player = new PcmPlayer();
-    pcm_player->moveToThread(&pcm_play_thread_);
-    connect(&pcm_play_thread_, SIGNAL(finished()), pcm_player, SLOT(deleteLater()));
+    pcm_player_ = new PcmPlayer();
+    pcm_player_->moveToThread(&pcm_play_thread_);
+    connect(&pcm_play_thread_, SIGNAL(finished()), pcm_player_, SLOT(deleteLater()));
 
     // 建立线程间通信的信号和槽
-//    connect(flv_parser, &FlvParser::AudioTagReady(), aac_decoder, &AacDecoder::DecodeAac());
-//    connect(aac_decoder, &AacDecoder::PcmReady(), pcm_player, &PcmPlayer::PlayPcm());
+    connect(SIGNAL_CENTER, SIGNAL(FlvFileOpen(QString)), file_parsers_, SLOT(OnFlvFileOpen(QString)));
+    connect(SIGNAL_CENTER, &SignalCenter::FlvH264TagReady, video_decoders_, &VideoDecoders::OnFlvH264TagReady);
+    connect(SIGNAL_CENTER, &SignalCenter::Yuv420pReady, &yuv420p_player_, &Yuv420pPlayer::OnYuv420pReady);
+    connect(SIGNAL_CENTER, &SignalCenter::Yuv420pPlay, video_widget_.get(), &VideoWidget::OnYuv420pPlay);
+    connect(SIGNAL_CENTER, &SignalCenter::FlvAacTagReady, audio_decoders_, &AudioDecoders::OnFlvAacTagReady);
+    connect(SIGNAL_CENTER, &SignalCenter::PcmReady, pcm_player_, &PcmPlayer::OnPcmReady);
 
-//    connect(flv_parser, &FlvParser::VideoTagReady(), h264_decoder, &H264Decoder::DecodeH264());
-//    connect(h264_decoder, &H264Decoder::Yuv420pReady(), yuv420p_player_, &Yuv420pPlayer::RecvYuv420p());
-
-    flv_parser_thread_.start();
-    aac_decode_thread_.start();
-    h264_decode_thread_.start();
+    file_parse_thread_.start();
+    audio_decode_thread_.start();
+    video_decode_thread_.start();
     pcm_play_thread_.start();
 }
 
 void MainWindow::StopThreads()
 {
-    flv_parser_thread_.quit();
-    flv_parser_thread_.wait();
+    // disconnect线程间通信的信号和槽
+    disconnect(SIGNAL_CENTER, SIGNAL(FlvFileOpen(QString)), file_parsers_, SLOT(OnFlvFileOpen(QString)));
+    disconnect(SIGNAL_CENTER, &SignalCenter::FlvH264TagReady, video_decoders_, &VideoDecoders::OnFlvH264TagReady);
+    disconnect(SIGNAL_CENTER, &SignalCenter::Yuv420pReady, &yuv420p_player_, &Yuv420pPlayer::OnYuv420pReady);
+    disconnect(SIGNAL_CENTER, &SignalCenter::Yuv420pPlay, video_widget_.get(), &VideoWidget::OnYuv420pPlay);
+    disconnect(SIGNAL_CENTER, &SignalCenter::FlvAacTagReady, audio_decoders_, &AudioDecoders::OnFlvAacTagReady);
+    disconnect(SIGNAL_CENTER, &SignalCenter::PcmReady, pcm_player_, &PcmPlayer::OnPcmReady);
 
-    aac_decode_thread_.quit();
-    aac_decode_thread_.wait();
+    file_parse_thread_.quit();
+    file_parse_thread_.wait();
 
-    h264_decode_thread_.quit();
-    h264_decode_thread_.wait();
+    audio_decode_thread_.quit();
+    audio_decode_thread_.wait();
+
+    video_decode_thread_.quit();
+    video_decode_thread_.wait();
 
     pcm_play_thread_.quit();
     pcm_play_thread_.wait();
+}
+
+void MainWindow::on_actionOpen_triggered()
+{
+    QString file_path = QFileDialog::getOpenFileName(this, tr("Open file"), QString(), "flv files(*.flv)");
+    if (file_path.isEmpty())
+    {
+        return;
+    }
+
+    this->ui->statusBar->showMessage(file_path);
+    emit SIGNAL_CENTER->FlvFileOpen(file_path);
 }

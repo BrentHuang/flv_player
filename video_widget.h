@@ -1,6 +1,7 @@
 #ifndef VIDEO_WIDGET_H
 #define VIDEO_WIDGET_H
 
+#include <memory>
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLWidget>
@@ -13,7 +14,7 @@ public:
     virtual ~VideoWidget();
 
 public slots:
-    void OnFrameRender(Yuv420p* frame);
+    void OnYuv420pPlay(std::shared_ptr<Yuv420p> yuv420p);
 
 protected:
     void initializeGL() override;
@@ -23,7 +24,7 @@ protected:
 private:
     QOpenGLShaderProgram program_;
     GLuint idy_, idu_, idv_;
-    Yuv420p* frame_;
+    std::shared_ptr<Yuv420p> yuv420p_;
 };
 
 #endif // VIDEO_WIDGET_H

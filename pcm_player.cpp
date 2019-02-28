@@ -9,3 +9,8 @@ PcmPlayer::~PcmPlayer()
 {
 
 }
+
+void PcmPlayer::OnPcmReady(std::shared_ptr<Pcm> pcm)
+{
+    pcm_device_.OnPcmReady(pcm);
+}

@@ -1,85 +1,49 @@
 #ifndef YUV420P_H
 #define YUV420P_H
 
-#include <QDebug>
-#include <memory>
+#include <string>
 
 struct Plane
 {
-    unsigned char* data;
     int width;
     int height;
-    int stride;
+    std::string data;
 
-    Plane()
+    Plane() : data()
     {
-        this->data = nullptr;
-        this->width = 0;
-        this->height = 0;
-        this->stride = 0;
+        width = 0;
+        height = 0;
     }
 
-    ~Plane()
+    ~Plane() {}
+
+    int Build(const unsigned char* data, int width, int height, int stride)
     {
-    }
+        this->width = width;
+        this->height = height;
 
-    int Build(const unsigned char* orig_data, int width, int height, int stride)
-    {
-//        this->width = width;
-//        this->height = height;
-//        this->stride = stride;
-
-//        this->data = std::make_shared < [this->width * this->height];
-//        if (NULL == this->data)
-//        {
-//            qDebug() << "failed to alloc memory";
-//            return -1;
-//        }
-
-//        for (int j = 0; j < this->height; ++j)
-//        {
-//            memcpy(this->data + j * this->width, orig_data + j * this->stride, this->width);
-//        }
+        for (int j = 0; j < this->height; ++j)
+        {
+            this->data.append((const char*) (data + j * stride), this->width);
+        }
 
         return 0;
-    }
-
-    void Release()
-    {
-
     }
 };
 
 struct Yuv420p
 {
-    int flv_tag_idx;
-    int pts;
+    unsigned int pts;
     Plane y;
     Plane u;
     Plane v;
 
     Yuv420p() : y(), u(), v()
     {
-        this->flv_tag_idx = -1;
-        this->pts = 0;
+        pts = 0;
     }
 
-    ~Yuv420p()
-    {
-        this->y.Release();
-        this->u.Release();
-        this->v.Release();
-    }
-
-    void SetFlvTagIdx(int flv_tag_idx)
-    {
-        this->flv_tag_idx = flv_tag_idx;
-    }
-
-    void SetPts(int pts)
-    {
-        this->pts = pts;
-    }
+    ~Yuv420p() {}
 };
 
 #endif // YUV420P_H
