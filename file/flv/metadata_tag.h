@@ -1,6 +1,7 @@
-#ifndef METADATA_TAG_H
+﻿#ifndef METADATA_TAG_H
 #define METADATA_TAG_H
 
+#include <memory>
 #include "flv_base.h"
 
 //一般来说，该Tag Data结构包含两个AMF包。AMF（Action Message Format）是Adobe设计的一种通用数据封装格式。第一个AMF包封装字符串类型数据，用来装入一个“onMetaData”标志，这个标志与Adobe的一些API调用有关。
@@ -22,7 +23,7 @@
 
 namespace flv
 {
-struct MetadataTag : public Tag
+struct MetadataTag : public Tag, public std::enable_shared_from_this<MetadataTag>
 {
     double duration;
     double width;

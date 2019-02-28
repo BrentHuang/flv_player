@@ -1,6 +1,7 @@
-#include "metadata_tag.h"
+﻿#include "metadata_tag.h"
 #include <QDebug>
 #include "byte_util.h"
+#include "signal_center.h"
 
 namespace flv
 {
@@ -40,21 +41,23 @@ int MetadataTag::Build(int tag_idx, const TagHead& tag_head, const unsigned char
 
 int MetadataTag::ParseECMAArray(const unsigned char* metadata)
 {
-    const int array_elem_count = ShowU32(&metadata[1]);
+    const int array_elem_count = ShowU32(metadata + 1);
     int offset = 5;
 
     for (int i = 0; i < array_elem_count; ++i)
     {
         double num_value = 0;
         bool bool_value = false;
-        std::string str_value = "";
+        std::unique_ptr<char[]> str_value = nullptr;
 
-        const int elem_name_len = ShowU16(&metadata[offset]);
+        const int elem_name_len = ShowU16(metadata + offset);
         offset += 2;
 
-        char elem_name[elem_name_len + 1] = "";
-        memcpy(elem_name, &metadata[offset], elem_name_len);
+        std::unique_ptr<char[]> elem_name(new char[elem_name_len]);
+        memcpy(elem_name.get(), metadata + offset, elem_name_len);
         offset += elem_name_len;
+
+        qDebug() << elem_name.get();
 
         const int elem_value_type = metadata[offset];
         offset += 1;
@@ -63,7 +66,7 @@ int MetadataTag::ParseECMAArray(const unsigned char* metadata)
         {
             case 0: // Number type，数据占sizeof(double)字节
             {
-                num_value = HexStr2double(&metadata[offset], sizeof(double));
+                num_value = HexStr2double(metadata + offset, sizeof(double));
                 offset += 8;
             }
             break;
@@ -81,7 +84,9 @@ int MetadataTag::ParseECMAArray(const unsigned char* metadata)
             {
                 const int str_value_len = ShowU16(metadata + offset);
                 offset += 2;
-                str_value.assign((const char*) (metadata + offset), str_value_len);
+
+                str_value.reset(new char[str_value_len]);
+                memcpy(str_value.get(), metadata + offset, str_value_len);
                 offset += str_value_len;
             }
             break;
@@ -90,7 +95,9 @@ int MetadataTag::ParseECMAArray(const unsigned char* metadata)
             {
                 const int str_value_len = ShowU32(metadata + offset);
                 offset += 4;
-                str_value.assign((const char*) (metadata + offset), str_value_len);
+
+                str_value.reset(new char[str_value_len]);
+                memcpy(str_value.get(), metadata + offset, str_value_len);
                 offset += str_value_len;
             }
             break;
@@ -103,74 +110,74 @@ int MetadataTag::ParseECMAArray(const unsigned char* metadata)
             break;
         }
 
-        if (0 == strncmp(elem_name, "duration", 8))
+        if (0 == strncmp(elem_name.get(), "duration", 8))
         {
             duration = num_value;
         }
-        else if (0 == strncmp(elem_name, "width", 5))
+        else if (0 == strncmp(elem_name.get(), "width", 5))
         {
             width = num_value;
         }
-        else if (0 == strncmp(elem_name, "height", 6))
+        else if (0 == strncmp(elem_name.get(), "height", 6))
         {
             height = num_value;
         }
-        else if (0 == strncmp(elem_name, "videodatarate", 13))
+        else if (0 == strncmp(elem_name.get(), "videodatarate", 13))
         {
             videodatarate = num_value;
         }
-        else if (0 == strncmp(elem_name, "framerate", 9))
+        else if (0 == strncmp(elem_name.get(), "framerate", 9))
         {
             framerate = num_value;
         }
-        else if (0 == strncmp(elem_name, "videocodecid", 12))
+        else if (0 == strncmp(elem_name.get(), "videocodecid", 12))
         {
             videocodecid = num_value;
         }
-        else if (0 == strncmp(elem_name, "audiodatarate", 13))
+        else if (0 == strncmp(elem_name.get(), "audiodatarate", 13))
         {
             audiodatarate = num_value;
         }
-        else if (0 == strncmp(elem_name, "audiosamplerate", 15))
+        else if (0 == strncmp(elem_name.get(), "audiosamplerate", 15))
         {
             audiosamplerate = num_value;
         }
-        else if (0 == strncmp(elem_name, "audiosamplesize", 15))
+        else if (0 == strncmp(elem_name.get(), "audiosamplesize", 15))
         {
             audiosamplesize = num_value;
         }
-        else if (0 == strncmp(elem_name, "stereo", 6))
+        else if (0 == strncmp(elem_name.get(), "stereo", 6))
         {
             stereo = bool_value;
         }
-        else if (0 == strncmp(elem_name, "audiocodecid", 12))
+        else if (0 == strncmp(elem_name.get(), "audiocodecid", 12))
         {
             audiocodecid = num_value;
         }
-        else if (0 == strncmp(elem_name, "major_brand", 11))
+        else if (0 == strncmp(elem_name.get(), "major_brand", 11))
         {
-            major_brand = str_value;
+            major_brand.assign(str_value.get());
         }
-        else if (0 == strncmp(elem_name, "minor_version", 13))
+        else if (0 == strncmp(elem_name.get(), "minor_version", 13))
         {
-            minor_version = str_value;
+            minor_version.assign(str_value.get());
         }
-        else if (0 == strncmp(elem_name, "compatible_brands", 17))
+        else if (0 == strncmp(elem_name.get(), "compatible_brands", 17))
         {
-            compatible_brands = str_value;
+            compatible_brands.assign(str_value.get());
         }
-        else if (0 == strncmp(elem_name, "encoder", 7))
+        else if (0 == strncmp(elem_name.get(), "encoder", 7))
         {
-            encoder = str_value;
+            encoder.assign(str_value.get());
         }
-        else if (0 == strncmp(elem_name, "filesize", 8))
+        else if (0 == strncmp(elem_name.get(), "filesize", 8))
         {
             filesize = num_value;
         }
         else
         {
             // TODO
-            qDebug() << "elem name: " << elem_name;
+            qDebug() << "elem name: " << elem_name.get();
         }
     }
 

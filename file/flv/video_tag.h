@@ -1,4 +1,4 @@
-#ifndef VIDEO_TAG_H
+﻿#ifndef VIDEO_TAG_H
 #define VIDEO_TAG_H
 
 #include <memory>

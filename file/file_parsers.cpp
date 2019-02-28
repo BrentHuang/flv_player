@@ -1,4 +1,4 @@
-#include "file_parsers.h"
+﻿#include "file_parsers.h"
 
 FileParsers::FileParsers() : flv_parser_()
 {

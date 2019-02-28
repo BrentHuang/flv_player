@@ -1,4 +1,4 @@
-#include "audio_tag.h"
+﻿#include "audio_tag.h"
 #include <QDebug>
 #include "signal_center.h"
 
@@ -17,7 +17,7 @@ int AudioTag::Build(int tag_idx, const TagHead& tag_head, const unsigned char* b
     sound_rate = (pd[0] & 0x0c) >> 2;
     sound_size = (pd[0] & 0x02) >> 1;
     sound_type = (pd[0] & 0x01);
-//    qDebug() << "sound　type: " << sound_type;
+//    qDebug() << "soundã€€type: " << sound_type;
 
     int ret = -1;
 

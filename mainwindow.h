@@ -5,11 +5,11 @@
 #include <QMainWindow>
 #include <QThread>
 #include "video_widget.h"
-#include "pcm_player.h"
 #include "yuv420p_player.h"
+#include "pcm_player.h"
 #include "file/file_parsers.h"
-#include "audio/audio_decoders.h"
 #include "video/video_decoders.h"
+#include "audio/audio_decoders.h"
 
 namespace Ui
 {
@@ -47,9 +47,7 @@ private:
     VideoDecoders* video_decoders_;
     QThread video_decode_thread_;
 
-    PcmPlayer* pcm_player_;
-    QThread pcm_play_thread_;
-
+    PcmPlayer pcm_player_;
     Yuv420pPlayer yuv420p_player_;
 };
 

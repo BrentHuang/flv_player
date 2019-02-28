@@ -3,6 +3,8 @@
 
 #include <memory>
 #include <QObject>
+#include <QAudioFormat>
+#include <QAudioOutput>
 #include "pcm_device.h"
 
 class PcmPlayer : public QObject
@@ -17,6 +19,7 @@ public slots:
     void OnPcmReady(std::shared_ptr<Pcm> pcm);
 
 private:
+    std::unique_ptr<QAudioOutput> audio_output_;
     PcmDevice pcm_device_;
 };
 

@@ -1,4 +1,4 @@
-#ifndef FLV_PARSER_H
+﻿#ifndef FLV_PARSER_H
 #define FLV_PARSER_H
 
 #include <memory>

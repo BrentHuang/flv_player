@@ -1,4 +1,4 @@
-#ifndef SINGLETON_H
+﻿#ifndef SINGLETON_H
 #define SINGLETON_H
 
 // 可以把任何类包装成线程安全的全局单例类，出口默认智能指针

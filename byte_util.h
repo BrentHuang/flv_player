@@ -2,6 +2,7 @@
 #define BYTE_UTIL_H
 
 #include <stdint.h>
+#include <memory>
 
 inline unsigned int ShowU32(const unsigned char* buf)
 {
@@ -25,16 +26,16 @@ inline unsigned int ShowU8(const unsigned char* buf)
 
 inline double HexStr2double(const unsigned char* hex, int length)
 {
-    char hexstr[length * 2];
-    memset(hexstr, 0, sizeof(hexstr));
+    std::unique_ptr<char[]> hexstr(new char[length * 2]);
+    memset(hexstr.get(), 0, length * 2);
 
     for (int i = 0; i < length; ++i)
     {
-        sprintf(hexstr + i * 2, "%02x", hex[i]);
+        sprintf(hexstr.get() + i * 2, "%02x", hex[i]);
     }
 
     double ret = 0;
-    sscanf(hexstr, "%llx", (unsigned long long*) &ret);
+    sscanf(hexstr.get(), "%llx", (unsigned long long*) &ret);
 
     return ret;
 }

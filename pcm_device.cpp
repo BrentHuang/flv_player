@@ -1,39 +1,19 @@
 #include "pcm_device.h"
 #include <QDebug>
 
-PcmDevice::PcmDevice() : audio_output_(), buf_()
+PcmDevice::PcmDevice() : buf_()
 {
     pos_ = 0;
 
     open(QIODevice::ReadOnly);
-
-    QAudioFormat format;
-    format.setSampleRate(44100);
-    format.setChannelCount(2);
-    format.setSampleSize(16);
-    format.setCodec("audio/pcm");
-    format.setByteOrder(QAudioFormat::LittleEndian);
-    format.setSampleType(QAudioFormat::SignedInt);
-
-    QAudioDeviceInfo device_info = QAudioDeviceInfo::defaultOutputDevice();
-
-    if (!device_info.isFormatSupported(format))
-    {
-        qWarning() << "fefault format not supported - trying to use nearest";
-        format = device_info.nearestFormat(format);
-    }
-
-    audio_output_.reset(new QAudioOutput(device_info, format));
-    audio_output_.get()->start(this);
 }
 
 PcmDevice::~PcmDevice()
 {
-    audio_output_.get()->stop();
     close();
 
-    pos_ = 0;
     buf_.clear();
+    pos_ = 0;
 }
 
 void PcmDevice::OnPcmReady(std::shared_ptr<Pcm> pcm)

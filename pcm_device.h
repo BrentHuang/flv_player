@@ -3,8 +3,6 @@
 
 #include <memory>
 #include <QIODevice>
-#include <QAudioFormat>
-#include <QAudioOutput>
 #include "pcm.h"
 
 class PcmDevice: public QIODevice
@@ -21,9 +19,8 @@ protected:
     qint64 bytesAvailable() const override;
 
 private:
-    std::unique_ptr<QAudioOutput> audio_output_;
-    qint64 pos_;
     QByteArray buf_;
+    qint64 pos_;
 };
 
 #endif // PCM_DEVICE_H

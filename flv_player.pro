@@ -24,6 +24,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 CONFIG += c++11
 
+# release版本带调试信息
+QMAKE_CXXFLAGS_RELEASE = $$QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO
+QMAKE_LFLAGS_RELEASE = $$QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO
+
 win32 {
     THIRD_PARTY_INSTALL_PREFIX = D:
 
@@ -58,20 +62,20 @@ SOURCES += \
     mainwindow.cpp \
     signal_center.cpp \
     video_widget.cpp \
-    pcm_player.cpp \
     yuv420p_player.cpp \
+    pcm_device.cpp \
+    pcm_player.cpp \
     file/file_parsers.cpp \
     file/flv/flv_base.cpp \
     file/flv/flv_parser.cpp \
     file/flv/metadata_tag.cpp \
-    file/flv/audio_tag.cpp \
     file/flv/video_tag.cpp \
-    audio/audio_decoders.cpp \
-    audio/aac/aac_decoder.cpp \
-    audio/aac/fdkaac_dec.cpp \
+    file/flv/audio_tag.cpp \
     video/video_decoders.cpp \
     video/h264/h264_decoder.cpp \
-    pcm_device.cpp
+    audio/audio_decoders.cpp \
+    audio/aac/fdkaac_dec.cpp \
+    audio/aac/aac_decoder.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -79,21 +83,21 @@ HEADERS += \
     singleton.h \
     signal_center.h \
     yuv420p.h \
-    pcm.h \
     video_widget.h \
     yuv420p_player.h \
+    pcm.h \
+    pcm_device.h \
     pcm_player.h \
     file/file_parsers.h \
     file/flv/flv_base.h \
     file/flv/flv_parser.h \
     file/flv/metadata_tag.h \
-    file/flv/audio_tag.h \
     file/flv/video_tag.h \
-    audio/audio_decoders.h \
-    audio/aac/aac_decoder.h \
+    file/flv/audio_tag.h \
     video/video_decoders.h \
     video/h264/h264_decoder.h \
-    pcm_device.h
+    audio/audio_decoders.h \
+    audio/aac/aac_decoder.h
 
 FORMS += \
         mainwindow.ui
