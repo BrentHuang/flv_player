@@ -73,6 +73,7 @@ AACDecoder::~AACDecoder()
 void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
 {
     const int aac_packet_type = flv_aac_tag.get()->tag_data[1];
+    const unsigned int pts = flv_aac_tag.get()->dts;
 
     std::unique_ptr<unsigned char[]> media = nullptr;
     int media_len = 0;
@@ -157,6 +158,7 @@ void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
         }
 
         pcm->Build((const unsigned char*) pcm_buf.data(), valid_size);
+        pcm.get()->pts = pts;
 
         emit SIGNAL_CENTER->PcmReady(pcm);
 
