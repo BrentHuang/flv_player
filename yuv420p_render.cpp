@@ -1,4 +1,4 @@
-#include "yuv420p_widget.h"
+#include "yuv420p_render.h"
 #include <QThread>
 
 static const GLfloat vertex_vertices[] =
@@ -17,21 +17,21 @@ static const GLfloat texture_vertices[] =
     1.0f,  0.0f
 };
 
-Yuv420pWidget::Yuv420pWidget(QWidget* parent) : QOpenGLWidget(parent), yuv420p_()
+Yuv420pRender::Yuv420pRender(QWidget* parent) : QOpenGLWidget(parent), yuv420p_()
 {
 }
 
-Yuv420pWidget::~Yuv420pWidget()
+Yuv420pRender::~Yuv420pRender()
 {
 }
 
-void Yuv420pWidget::OnYuv420pPlay(std::shared_ptr<Yuv420p> yuv420p)
+void Yuv420pRender::OnYuv420pPlay(std::shared_ptr<Yuv420p> yuv420p)
 {
     yuv420p_ = yuv420p;
     update();
 }
 
-void Yuv420pWidget::initializeGL()
+void Yuv420pRender::initializeGL()
 {
     initializeOpenGLFunctions();
 
@@ -81,13 +81,15 @@ void Yuv420pWidget::initializeGL()
     program_.release();
 }
 
-void Yuv420pWidget::resizeGL(int w, int h)
+void Yuv420pRender::resizeGL(int w, int h)
 {
     glViewport(0, 0, w, h);
 }
 
-void Yuv420pWidget::paintGL()
+void Yuv420pRender::paintGL()
 {
+//    qDebug() << "Yuv420pWidget::paintGL " << QThread::currentThreadId(); // 主线程中
+
     if (nullptr == yuv420p_)
     {
         return;

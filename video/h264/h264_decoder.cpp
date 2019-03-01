@@ -92,14 +92,6 @@ void H264Decoder::OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag)
         if (nullptr == yuv420p)
         {
             qDebug() << "failed to alloc memory";
-
-            // TODO 是否要释放？
-            for (int i = 0; i < 3; ++i)
-            {
-                delete [] data[i];
-                data[i] = NULL;
-            }
-
             return;
         }
 

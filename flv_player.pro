@@ -58,6 +58,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     signal_center.cpp \
+    yuv420p_render.cpp \
     yuv420p_player.cpp \
     pcm_device.cpp \
     pcm_player.cpp \
@@ -71,8 +72,8 @@ SOURCES += \
     video/h264/h264_decoder.cpp \
     audio/audio_decoders.cpp \
     audio/aac/fdkaac_dec.cpp \
-    audio/aac/aac_decoder.cpp \
-    yuv420p_widget.cpp
+    audio/aac/aac_decoder.cpp
+
 
 HEADERS += \
     mainwindow.h \
@@ -80,10 +81,13 @@ HEADERS += \
     singleton.h \
     signal_center.h \
     yuv420p.h \
+    yuv420p_render.h \
     yuv420p_player.h \
     pcm.h \
     pcm_device.h \
     pcm_player.h \
+    global.h \
+    av_sync.h \
     file/file_parsers.h \
     file/flv/flv_base.h \
     file/flv/flv_parser.h \
@@ -93,8 +97,7 @@ HEADERS += \
     video/video_decoders.h \
     video/h264/h264_decoder.h \
     audio/audio_decoders.h \
-    audio/aac/aac_decoder.h \
-    yuv420p_widget.h
+    audio/aac/aac_decoder.h
 
 FORMS += \
         mainwindow.ui

@@ -3,6 +3,7 @@
 #include <QMessageBox>
 #include "ui_mainwindow.h"
 #include "signal_center.h"
+#include "global.h"
 
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent),
@@ -10,8 +11,8 @@ MainWindow::MainWindow(QWidget* parent) :
 {
     ui->setupUi(this);
 
-    yuv420p_widget_ = new Yuv420pWidget(this);
-    setCentralWidget(yuv420p_widget_);
+    yuv420p_render_ = new Yuv420pRender(this);
+    setCentralWidget(yuv420p_render_);
 
     StartThreads();
 }
@@ -26,6 +27,12 @@ void MainWindow::closeEvent(QCloseEvent* event)
 {
     if (QMessageBox::Yes == QMessageBox::question(this, tr("Exit"), tr("Do you want to quit?")))
     {
+        GLOBAL->app_exit = true;
+
+        GLOBAL->file_parse_mutex.lock();
+        GLOBAL->file_parse_cond.wakeAll();
+        GLOBAL->file_parse_mutex.unlock();
+
         event->accept();
     }
     else
@@ -54,7 +61,7 @@ void MainWindow::StartThreads()
     connect(SIGNAL_CENTER, &SignalCenter::FlvFileOpen, file_parsers_, &FileParsers::OnFlvFileOpen);
     connect(SIGNAL_CENTER, &SignalCenter::FlvH264TagReady, video_decoders_, &VideoDecoders::OnFlvH264TagReady);
     connect(SIGNAL_CENTER, &SignalCenter::Yuv420pReady, &yuv420p_player_, &Yuv420pPlayer::OnYuv420pReady);
-    connect(SIGNAL_CENTER, &SignalCenter::Yuv420pPlay, yuv420p_widget_, &Yuv420pWidget::OnYuv420pPlay);
+    connect(SIGNAL_CENTER, &SignalCenter::Yuv420pPlay, yuv420p_render_, &Yuv420pRender::OnYuv420pPlay);
     connect(SIGNAL_CENTER, &SignalCenter::FlvAacTagReady, audio_decoders_, &AudioDecoders::OnFlvAacTagReady);
     connect(SIGNAL_CENTER, &SignalCenter::PcmReady, &pcm_player_, &PcmPlayer::OnPcmReady);
 
@@ -71,7 +78,7 @@ void MainWindow::StopThreads()
     disconnect(SIGNAL_CENTER, &SignalCenter::FlvFileOpen, file_parsers_, &FileParsers::OnFlvFileOpen);
     disconnect(SIGNAL_CENTER, &SignalCenter::FlvH264TagReady, video_decoders_, &VideoDecoders::OnFlvH264TagReady);
     disconnect(SIGNAL_CENTER, &SignalCenter::Yuv420pReady, &yuv420p_player_, &Yuv420pPlayer::OnYuv420pReady);
-    disconnect(SIGNAL_CENTER, &SignalCenter::Yuv420pPlay, yuv420p_widget_, &Yuv420pWidget::OnYuv420pPlay);
+    disconnect(SIGNAL_CENTER, &SignalCenter::Yuv420pPlay, yuv420p_render_, &Yuv420pRender::OnYuv420pPlay);
     disconnect(SIGNAL_CENTER, &SignalCenter::FlvAacTagReady, audio_decoders_, &AudioDecoders::OnFlvAacTagReady);
     disconnect(SIGNAL_CENTER, &SignalCenter::PcmReady, &pcm_player_, &PcmPlayer::OnPcmReady);
 

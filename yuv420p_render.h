@@ -1,5 +1,5 @@
-#ifndef YUV420P_WIDGET_H
-#define YUV420P_WIDGET_H
+#ifndef YUV420P_RENDER_H
+#define YUV420P_RENDER_H
 
 #include <memory>
 #include <QOpenGLFunctions>
@@ -7,11 +7,11 @@
 #include <QOpenGLWidget>
 #include "yuv420p.h"
 
-class Yuv420pWidget : public QOpenGLWidget, protected QOpenGLFunctions
+class Yuv420pRender : public QOpenGLWidget, protected QOpenGLFunctions
 {
 public:
-    explicit Yuv420pWidget(QWidget* parent = nullptr);
-    virtual ~Yuv420pWidget();
+    explicit Yuv420pRender(QWidget* parent = nullptr);
+    virtual ~Yuv420pRender();
 
 public slots:
     void OnYuv420pPlay(std::shared_ptr<Yuv420p> yuv420p);
@@ -27,4 +27,4 @@ private:
     std::shared_ptr<Yuv420p> yuv420p_;
 };
 
-#endif // YUV420P_WIDGET_H
+#endif // YUV420P_RENDER_H

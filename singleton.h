@@ -12,7 +12,7 @@ class Singleton
 public:
     // 获取全局单例对象
     template<typename ...Args>
-    static std::shared_ptr<T> GetInstance(Args&& ... args)
+    static std::shared_ptr<T> Instance(Args&& ... args)
     {
         if (nullptr == sington_)
         {
@@ -27,7 +27,7 @@ public:
     }
 
     // 主动析构单例对象（一般不需要主动析构，除非特殊需求）
-    static void DestroyInstance()
+    static void Release()
     {
         if (sington_ != nullptr)
         {
@@ -81,8 +81,8 @@ std::mutex Singleton<T>::mutex_;
 
 //int main(int argc, char* argv[])
 //{
-//    auto p1 = Singleton<MyClass>::GetInstance("create");
-//    auto p2 = Singleton<MyClass>::GetInstance(1);
+//    auto p1 = Singleton<MyClass>::Instance("create");
+//    auto p2 = Singleton<MyClass>::Instance(1);
 //    assert(p1 == p2);
 //    return 0;
 //}

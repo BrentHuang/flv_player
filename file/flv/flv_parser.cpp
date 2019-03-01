@@ -7,6 +7,7 @@
 #include "metadata_tag.h"
 #include "audio_tag.h"
 #include "video_tag.h"
+#include "global.h"
 
 namespace flv
 {
@@ -57,6 +58,11 @@ void FlvParser::OnFileOpen(const QString& file_path)
 
         int used_len = 0;
         Parse(used_len, buf, flv_pos);
+
+        if (GLOBAL->app_exit)
+        {
+            break;
+        }
 
         if (flv_pos != used_len)
         {
@@ -118,7 +124,20 @@ int FlvParser::Parse(int& used_len, const unsigned char* buf, int buf_size)
 
         offset += (TAG_HEAD_LEN + tag.get()->tag_head.data_size);
 
-        QThread::msleep(10); // 解析出一个tag就sleep一下，等价于在定时器中解析tag TODO 读文件与播放怎么同步，减少cpu和内存占用（生产者与消费者）
+        if (GLOBAL->app_exit)
+        {
+            return -1;
+        }
+
+        GLOBAL->file_parse_mutex.lock();
+
+        if (GLOBAL->pcm_size_in_queue >= Global::PCM_SIZE_TO_PAUSE_PARSING
+                || GLOBAL->yuv420p_count_in_queue >= Global::YUV420P_COUNT_TO_PAUSE_PARSING)
+        {
+            GLOBAL->file_parse_cond.wait(&GLOBAL->file_parse_mutex);
+        }
+
+        GLOBAL->file_parse_mutex.unlock();
     }
 
     used_len = offset;

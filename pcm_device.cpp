@@ -1,47 +1,80 @@
 #include "pcm_device.h"
 #include <QDebug>
-#include <chrono>
+#include <QThread>
+#include <QMutexLocker>
+#include "av_sync.h"
+#include "global.h"
 
-PcmDevice::PcmDevice() : buf_()
+PcmDevice::PcmDevice() : pcm_list_()
 {
-    pos_ = 0;
-
     open(QIODevice::ReadOnly);
 }
 
 PcmDevice::~PcmDevice()
 {
     close();
-
-    buf_.clear();
-    pos_ = 0;
 }
 
 void PcmDevice::OnPcmReady(std::shared_ptr<Pcm> pcm)
 {
-    buf_.append((const char*) pcm.get()->data.data(), pcm.get()->data.size());
+    pcm_list_.push_back(pcm);
 
-    auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                      std::chrono::system_clock::now().time_since_epoch()).count();
-
+    GLOBAL->file_parse_mutex.lock();
+    GLOBAL->pcm_size_in_queue += pcm.get()->data.size();
+    GLOBAL->file_parse_mutex.unlock();
 }
 
 qint64 PcmDevice::readData(char* data, qint64 maxSize)
 {
-    qint64 total = 0;
+//    qDebug() << "PcmDevice::readData " << QThread::currentThreadId(); // 主线程中
 
-    if (!buf_.isEmpty())
+    if (pcm_list_.empty())
     {
-        while (maxSize - total > 0)
-        {
-            const qint64 chunk = qMin((buf_.size() - pos_), maxSize - total);
-            memcpy(data + total, buf_.constData() + pos_, chunk);
-            pos_ = (pos_ + chunk) % buf_.size();
-            total += chunk;
-        }
+        return 0;
     }
 
-    return total;
+    qint64 total_size = 0;
+
+    while (maxSize - total_size > 0)
+    {
+        if (pcm_list_.empty())
+        {
+            break;
+        }
+
+        std::shared_ptr<Pcm> current = pcm_list_.front();
+        const qint64 chunk_size = qMin((qint64) current.get()->data.size(), maxSize - total_size);
+        memcpy(data + total_size, current.get()->data.data(), chunk_size);
+
+        if (chunk_size < (qint64) current.get()->data.size())
+        {
+            const int left_len = current.get()->data.size() - chunk_size;
+            std::unique_ptr<char[]> left_data(new char[left_len]);
+            memcpy(left_data.get(), current.get()->data.data() + chunk_size, left_len);
+            current.get()->data.assign(left_data.get(), left_len);
+        }
+        else
+        {
+            pcm_list_.pop_front();
+        }
+
+        total_size += chunk_size;
+    }
+
+    AV_SYNC->consumed_pcm_size += total_size;
+    AV_SYNC->audio_drift = (AV_SYNC->consumed_pcm_size) * 1000 / (44100 << 2) - AVSync::TimeNowMSec();
+
+    GLOBAL->file_parse_mutex.lock();
+    GLOBAL->pcm_size_in_queue -= total_size;
+
+    if (GLOBAL->pcm_size_in_queue <= Global::PCM_SIZE_TO_RESUME_PARSING)
+    {
+        GLOBAL->file_parse_cond.wakeAll();
+    }
+
+    GLOBAL->file_parse_mutex.unlock();
+
+    return total_size;
 }
 
 qint64 PcmDevice::writeData(const char* data, qint64 maxSize)
@@ -54,5 +87,6 @@ qint64 PcmDevice::writeData(const char* data, qint64 maxSize)
 
 qint64 PcmDevice::bytesAvailable() const
 {
-    return buf_.size() + QIODevice::bytesAvailable();
+    QMutexLocker lock(&GLOBAL->file_parse_mutex);
+    return GLOBAL->pcm_size_in_queue + QIODevice::bytesAvailable();
 }

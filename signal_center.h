@@ -25,6 +25,6 @@ signals:
     void PcmReady(std::shared_ptr<Pcm> pcm);
 };
 
-#define SIGNAL_CENTER Singleton<SignalCenter>::GetInstance().get()
+#define SIGNAL_CENTER Singleton<SignalCenter>::Instance().get()
 
 #endif // SIGNAL_CENTER_H

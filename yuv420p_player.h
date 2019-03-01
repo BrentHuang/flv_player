@@ -2,9 +2,9 @@
 #define YUV420P_PLAYER_H
 
 #include <memory>
-#include <list>
 #include <QObject>
 #include <QTimer>
+#include <QVector>
 #include "yuv420p.h"
 
 class Yuv420pPlayer : public QObject
@@ -23,8 +23,16 @@ private slots:
 
 private:
     std::unique_ptr<QTimer> timer_;
-    typedef std::list<std::shared_ptr<Yuv420p>> Yuv420pList;
-    Yuv420pList yuv420p_list_;
+
+    struct Yuv420pCtx
+    {
+        std::shared_ptr<Yuv420p> yuv420p;
+        qint64 play_time;
+        int duration;
+    };
+
+    typedef QVector<Yuv420pCtx> Yuv420pCtxVec;
+    Yuv420pCtxVec yuv420p_ctx_vec_;
 };
 
 #endif // YUV420P_PLAYER_H

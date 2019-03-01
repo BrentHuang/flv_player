@@ -2,6 +2,7 @@
 #define PCM_DEVICE_H
 
 #include <memory>
+#include <list>
 #include <QIODevice>
 #include "pcm.h"
 
@@ -19,8 +20,8 @@ protected:
     qint64 bytesAvailable() const override;
 
 private:
-    QByteArray buf_;
-    qint64 pos_;
+    typedef std::list<std::shared_ptr<Pcm>> PcmList;
+    PcmList pcm_list_;
 };
 
 #endif // PCM_DEVICE_H
