@@ -68,11 +68,11 @@ void Yuv420pPlayer::OnTimer()
             if (delta > 200)
             {
                 // 视频太快了，要减速
-                current.duration += 20;
+                current.duration += 50;
             }
             else if (delta < -200)
             {
-                current.duration -= 20;
+                current.duration -= 50;
                 if (current.duration < 0)
                 {
                     current.duration = 0;
