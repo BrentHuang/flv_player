@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <QDebug>
+#include <QThread>
 #include "byte_util.h"
 #include "metadata_tag.h"
 #include "audio_tag.h"
@@ -20,6 +21,8 @@ FlvParser::~FlvParser()
 
 void FlvParser::OnFileOpen(const QString& file_path)
 {
+//    qDebug() << "FlvParser::OnFileOpen " << QThread::currentThreadId();
+
     std::fstream fin;
     fin.open(file_path.toStdString(), std::ios_base::in | std::ios_base::binary);
     if (!fin)
@@ -114,6 +117,8 @@ int FlvParser::Parse(int& used_len, const unsigned char* buf, int buf_size)
         }
 
         offset += (TAG_HEAD_LEN + tag.get()->tag_head.data_size);
+
+        QThread::msleep(10); // 解析出一个tag就sleep一下，等价于在定时器中解析tag TODO 读文件与播放怎么同步，减少cpu和内存占用（生产者与消费者）
     }
 
     used_len = offset;

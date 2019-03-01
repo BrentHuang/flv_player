@@ -1,5 +1,6 @@
 #include "aac_decoder.h"
 #include <QDebug>
+#include <QThread>
 #include "byte_util.h"
 #include "pcm.h"
 #include "signal_center.h"
@@ -72,6 +73,8 @@ AACDecoder::~AACDecoder()
 
 void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
 {
+//    qDebug() << "AACDecoder::OnFlvAacTagReady " << QThread::currentThreadId();
+
     const int aac_packet_type = flv_aac_tag.get()->tag_data[1];
     const unsigned int pts = flv_aac_tag.get()->dts;
 
@@ -101,7 +104,12 @@ void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
     const int aac_size = media_len;
     int pos = 0;
 
-    std::vector<char> pcm_buf(pcm_size_, 0);
+    std::unique_ptr<char[]> pcm_buf(new char[pcm_size_]);
+    if (nullptr == pcm_buf)
+    {
+        qDebug() << "failed to alloc memory";
+        return;
+    }
 
     forever
     {
@@ -138,7 +146,7 @@ void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
         }
 
         int valid_size = 0;
-        ret = fdkaac_dec_->aacdec_decode_frame(&pcm_buf[0], pcm_buf.size(), &valid_size);
+        ret = fdkaac_dec_->aacdec_decode_frame(pcm_buf.get(), pcm_size_, &valid_size);
 
         if (ret == AAC_DEC_NOT_ENOUGH_BITS)
         {
@@ -157,7 +165,7 @@ void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
             return;
         }
 
-        pcm->Build((const unsigned char*) pcm_buf.data(), valid_size);
+        pcm->Build((const unsigned char*) pcm_buf.get(), valid_size);
         pcm.get()->pts = pts;
 
         emit SIGNAL_CENTER->PcmReady(pcm);
@@ -178,7 +186,6 @@ void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
 
         //        wav_write_data(wav, (unsigned char*)&pcm_buf[0], valid_size);
     }
-
 }
 
 std::unique_ptr<unsigned char[]> AACDecoder::ParseAudioSpecificConfig(int& media_len, std::shared_ptr<flv::AudioTag> flv_aac_tag)

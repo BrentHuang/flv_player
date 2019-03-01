@@ -7,7 +7,7 @@ Yuv420pPlayer::Yuv420pPlayer() : yuv420p_list_()
 {
     timer_.reset(new QTimer());
     connect(timer_.get(), SIGNAL(timeout()), this, SLOT(OnTimer()));
-    timer_.get()->start(20);
+    timer_.get()->start(40); // TODO
 }
 
 Yuv420pPlayer::~Yuv420pPlayer()

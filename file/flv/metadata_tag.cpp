@@ -57,8 +57,6 @@ int MetadataTag::ParseECMAArray(const unsigned char* metadata)
         memcpy(elem_name.get(), metadata + offset, elem_name_len);
         offset += elem_name_len;
 
-        qDebug() << elem_name.get();
-
         const int elem_value_type = metadata[offset];
         offset += 1;
 

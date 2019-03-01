@@ -1,5 +1,6 @@
 #include "pcm_device.h"
 #include <QDebug>
+#include <chrono>
 
 PcmDevice::PcmDevice() : buf_()
 {
@@ -19,6 +20,10 @@ PcmDevice::~PcmDevice()
 void PcmDevice::OnPcmReady(std::shared_ptr<Pcm> pcm)
 {
     buf_.append((const char*) pcm.get()->data.data(), pcm.get()->data.size());
+
+    auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                      std::chrono::system_clock::now().time_since_epoch()).count();
+
 }
 
 qint64 PcmDevice::readData(char* data, qint64 maxSize)

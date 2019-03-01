@@ -1,5 +1,6 @@
 ﻿#include "h264_decoder.h"
 #include <QDebug>
+#include <QThread>
 #include "byte_util.h"
 #include "yuv420p.h"
 #include "signal_center.h"
@@ -44,6 +45,8 @@ H264Decoder::~H264Decoder()
 
 void H264Decoder::OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag)
 {
+//    qDebug() << "H264Decoder::OnFlvH264TagReady " << QThread::currentThreadId();
+
     const unsigned char* tag_data = (const unsigned char*) flv_h264_tag.get()->tag_data.data();
     const int avc_packet_type = tag_data[1];
     const int composition_time = (int) ShowU24(tag_data + 2);
