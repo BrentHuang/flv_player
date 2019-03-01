@@ -33,7 +33,7 @@ win32 {
 
     INCLUDEPATH += $${THIRD_PARTY_INSTALL_PREFIX}/fdk-aac/include \
         $${THIRD_PARTY_INSTALL_PREFIX}/openh264/include
-    LIBS += -L$${THIRD_PARTY_INSTALL_PREFIX}/fdk-aac/lib -lfdk-aac-2 \
+    LIBS += -L$${THIRD_PARTY_INSTALL_PREFIX}/fdk-aac/lib -llibfdk-aac-2 \
         -L$${THIRD_PARTY_INSTALL_PREFIX}/openh264/lib -lopenh264
 }
 
