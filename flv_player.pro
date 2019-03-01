@@ -32,11 +32,9 @@ win32 {
     THIRD_PARTY_INSTALL_PREFIX = D:
 
     INCLUDEPATH += $${THIRD_PARTY_INSTALL_PREFIX}/fdk-aac/include \
-        $${THIRD_PARTY_INSTALL_PREFIX}/openh264/include \
-        $${THIRD_PARTY_INSTALL_PREFIX}/SDL2-2.0.9/include
+        $${THIRD_PARTY_INSTALL_PREFIX}/openh264/include
     LIBS += -L$${THIRD_PARTY_INSTALL_PREFIX}/fdk-aac/lib -lfdk-aac-2 \
-        -L$${THIRD_PARTY_INSTALL_PREFIX}/openh264/lib -lopenh264 \
-        -L$${THIRD_PARTY_INSTALL_PREFIX}/SDL2-2.0.9/lib/x86 -lSDL2
+        -L$${THIRD_PARTY_INSTALL_PREFIX}/openh264/lib -lopenh264
 }
 
 macx {
@@ -51,17 +49,15 @@ unix:!macx {
     }
 
     INCLUDEPATH += $${THIRD_PARTY_INSTALL_PREFIX}/fdk_aac/include \
-        $${THIRD_PARTY_INSTALL_PREFIX}/openh264/include \
-        $${THIRD_PARTY_INSTALL_PREFIX}/sdl/include
+        $${THIRD_PARTY_INSTALL_PREFIX}/openh264/include
     LIBS += -L$${THIRD_PARTY_INSTALL_PREFIX}/fdk_aac/lib -lfdk-aac \
-        -L$${THIRD_PARTY_INSTALL_PREFIX}/openh264/lib -lopenh264 \
-        -L$${THIRD_PARTY_INSTALL_PREFIX}/sdl/lib -lSDL2
+        -L$${THIRD_PARTY_INSTALL_PREFIX}/openh264/lib -lopenh264
 }
+
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
     signal_center.cpp \
-    video_widget.cpp \
     yuv420p_player.cpp \
     pcm_device.cpp \
     pcm_player.cpp \
@@ -75,7 +71,8 @@ SOURCES += \
     video/h264/h264_decoder.cpp \
     audio/audio_decoders.cpp \
     audio/aac/fdkaac_dec.cpp \
-    audio/aac/aac_decoder.cpp
+    audio/aac/aac_decoder.cpp \
+    yuv420p_widget.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -83,7 +80,6 @@ HEADERS += \
     singleton.h \
     signal_center.h \
     yuv420p.h \
-    video_widget.h \
     yuv420p_player.h \
     pcm.h \
     pcm_device.h \
@@ -97,7 +93,8 @@ HEADERS += \
     video/video_decoders.h \
     video/h264/h264_decoder.h \
     audio/audio_decoders.h \
-    audio/aac/aac_decoder.h
+    audio/aac/aac_decoder.h \
+    yuv420p_widget.h
 
 FORMS += \
         mainwindow.ui

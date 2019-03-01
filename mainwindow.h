@@ -4,7 +4,7 @@
 #include <QCloseEvent>
 #include <QMainWindow>
 #include <QThread>
-#include "video_widget.h"
+#include "yuv420p_widget.h"
 #include "yuv420p_player.h"
 #include "pcm_player.h"
 #include "file/file_parsers.h"
@@ -35,8 +35,7 @@ private:
 
 private:
     Ui::MainWindow* ui;
-
-    std::unique_ptr<VideoWidget> video_widget_;
+    Yuv420pWidget* yuv420p_widget_;
 
     FileParsers* file_parsers_;
     QThread file_parse_thread_;

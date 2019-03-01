@@ -10,8 +10,8 @@ MainWindow::MainWindow(QWidget* parent) :
 {
     ui->setupUi(this);
 
-    video_widget_.reset(new VideoWidget());
-    this->setCentralWidget(video_widget_.get());
+    yuv420p_widget_ = new Yuv420pWidget(this);
+    setCentralWidget(yuv420p_widget_);
 
     StartThreads();
 }
@@ -54,7 +54,7 @@ void MainWindow::StartThreads()
     connect(SIGNAL_CENTER, &SignalCenter::FlvFileOpen, file_parsers_, &FileParsers::OnFlvFileOpen);
     connect(SIGNAL_CENTER, &SignalCenter::FlvH264TagReady, video_decoders_, &VideoDecoders::OnFlvH264TagReady);
     connect(SIGNAL_CENTER, &SignalCenter::Yuv420pReady, &yuv420p_player_, &Yuv420pPlayer::OnYuv420pReady);
-    connect(SIGNAL_CENTER, &SignalCenter::Yuv420pPlay, video_widget_.get(), &VideoWidget::OnYuv420pPlay);
+    connect(SIGNAL_CENTER, &SignalCenter::Yuv420pPlay, yuv420p_widget_, &Yuv420pWidget::OnYuv420pPlay);
     connect(SIGNAL_CENTER, &SignalCenter::FlvAacTagReady, audio_decoders_, &AudioDecoders::OnFlvAacTagReady);
     connect(SIGNAL_CENTER, &SignalCenter::PcmReady, &pcm_player_, &PcmPlayer::OnPcmReady);
 
@@ -71,7 +71,7 @@ void MainWindow::StopThreads()
     disconnect(SIGNAL_CENTER, &SignalCenter::FlvFileOpen, file_parsers_, &FileParsers::OnFlvFileOpen);
     disconnect(SIGNAL_CENTER, &SignalCenter::FlvH264TagReady, video_decoders_, &VideoDecoders::OnFlvH264TagReady);
     disconnect(SIGNAL_CENTER, &SignalCenter::Yuv420pReady, &yuv420p_player_, &Yuv420pPlayer::OnYuv420pReady);
-    disconnect(SIGNAL_CENTER, &SignalCenter::Yuv420pPlay, video_widget_.get(), &VideoWidget::OnYuv420pPlay);
+    disconnect(SIGNAL_CENTER, &SignalCenter::Yuv420pPlay, yuv420p_widget_, &Yuv420pWidget::OnYuv420pPlay);
     disconnect(SIGNAL_CENTER, &SignalCenter::FlvAacTagReady, audio_decoders_, &AudioDecoders::OnFlvAacTagReady);
     disconnect(SIGNAL_CENTER, &SignalCenter::PcmReady, &pcm_player_, &PcmPlayer::OnPcmReady);
 
