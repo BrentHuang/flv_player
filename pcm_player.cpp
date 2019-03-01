@@ -1,4 +1,4 @@
-#include "pcm_player.h"
+﻿#include "pcm_player.h"
 #include <QDebug>
 
 PcmPlayer::PcmPlayer() : audio_output_(), pcm_device_()
