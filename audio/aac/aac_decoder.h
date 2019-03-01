@@ -25,14 +25,14 @@ public:
 
 private:
     std::unique_ptr<unsigned char[]> ParseAudioSpecificConfig(int& media_len, std::shared_ptr<flv::AudioTag> flv_aac_tag);
-    std::unique_ptr<unsigned char[]> ParseRawAAC(int& media_len, std::shared_ptr<flv::AudioTag> flv_aac_tag, int aac_profile, int sample_rate_index, int channel_config);
+    std::unique_ptr<unsigned char[]> ParseRawAAC(int& media_len, std::shared_ptr<flv::AudioTag> flv_aac_tag, int aac_profile, int sample_rate_index, int channels);
 
 private:
     AacDecoder* fdkaac_dec_;
     int pcm_size_;
     int aac_profile_;
     int sample_rate_index_;
-    int channel_config_;
+    int channels_;
 };
 
 #endif // AAC_DECODER_H

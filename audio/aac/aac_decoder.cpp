@@ -40,7 +40,7 @@ AACDecoder::AACDecoder()
     fdkaac_dec_ = nullptr;
     aac_profile_ = 0;
     sample_rate_index_ = 0;
-    channel_config_ = 0;
+    channels_ = 0;
 
     fdkaac_dec_ = new AacDecoder();
     if (nullptr == fdkaac_dec_)
@@ -88,11 +88,7 @@ void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
     }
     else if (1 == aac_packet_type)
     {
-        media = ParseRawAAC(media_len, flv_aac_tag, aac_profile_, sample_rate_index_, channel_config_);
-    }
-    else
-    {
-        return; // TODO
+        media = ParseRawAAC(media_len, flv_aac_tag, aac_profile_, sample_rate_index_, channels_);
     }
 
     if (nullptr == media)
@@ -194,26 +190,26 @@ std::unique_ptr<unsigned char[]> AACDecoder::ParseAudioSpecificConfig(int& media
 
     const unsigned char* pd = (const unsigned char*) flv_aac_tag.get()->tag_data.data();
 
-    aac_profile_ = ((pd[2] & 0xf8) >> 3) - 1;
+    aac_profile_ = ((pd[2] & 0xf8) >> 3) - 1; // Object Type(5位，没有减1，这里减去1是什么意思？ TODO)
     sample_rate_index_ = ((pd[2] & 0x07) << 1) | (pd[3] >> 7);
-    channel_config_ = (pd[3] >> 3) & 0x0f;
+    channels_ = (pd[3] >> 3) & 0x0f; // 1：单声道 2：双声道 以此类推
 
     return nullptr;
 }
 
-std::unique_ptr<unsigned char[]> AACDecoder::ParseRawAAC(int& media_len, std::shared_ptr<flv::AudioTag> flv_aac_tag, int aac_profile, int sample_rate_index, int channel_config)
+std::unique_ptr<unsigned char[]> AACDecoder::ParseRawAAC(int& media_len, std::shared_ptr<flv::AudioTag> flv_aac_tag, int aac_profile, int sample_rate_index, int channels)
 {
     const int data_size = flv_aac_tag.get()->tag_head.data_size - 2;
     uint64_t bits = 0;
 
-    WriteU64(bits, 12, 0xFFF);
+    WriteU64(bits, 12, 0xFFF); // TODO 待分析
     WriteU64(bits, 1, 0);
     WriteU64(bits, 2, 0);
     WriteU64(bits, 1, 1);
     WriteU64(bits, 2, aac_profile);
     WriteU64(bits, 4, sample_rate_index);
     WriteU64(bits, 1, 0);
-    WriteU64(bits, 3, channel_config);
+    WriteU64(bits, 3, channels);
     WriteU64(bits, 1, 0);
     WriteU64(bits, 1, 0);
     WriteU64(bits, 1, 0);

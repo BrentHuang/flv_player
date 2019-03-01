@@ -26,8 +26,9 @@ inline unsigned int ShowU8(const unsigned char* buf)
 
 inline double HexStr2double(const unsigned char* hex, int length)
 {
-    std::unique_ptr<char[]> hexstr(new char[length * 2]);
-    memset(hexstr.get(), 0, length * 2);
+    const int len = (length << 1) + 1;
+    std::unique_ptr<char[]> hexstr(new char[len]);
+    memset(hexstr.get(), 0, len);
 
     for (int i = 0; i < length; ++i)
     {

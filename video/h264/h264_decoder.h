@@ -14,8 +14,8 @@ public:
     void OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag);
 
 private:
-    std::unique_ptr<unsigned char[]> ParseH264Configuration(int& media_len, std::shared_ptr<flv::VideoTag> flv_h264_tag);
-    std::unique_ptr<unsigned char[]> ParseNalu(int& media_len, std::shared_ptr<flv::VideoTag> flv_h264_tag, int nalu_len_size);
+    std::unique_ptr<unsigned char[]> ParseAVCDecorderConfigurationRecord(int& media_len, std::shared_ptr<flv::VideoTag> flv_h264_tag);
+    std::unique_ptr<unsigned char[]> ParseNalus(int& media_len, std::shared_ptr<flv::VideoTag> flv_h264_tag, int nalu_len_size);
 
 private:
     ISVCDecoder* decoder_;

@@ -5,7 +5,16 @@
 #include "yuv420p.h"
 #include "signal_center.h"
 
-static const unsigned int H264_START_CODE = 0x01000000;
+//16bit宽的数0x1234在两种模式CPU内存中的存放方式（假设从地址0x4000开始存放）为：
+//内存地址  小端模式存放内容    大端模式存放内容
+//0x4000    0x34            0x12
+//0x4001    0x12            0x34
+
+#if LITTLE_ENDIAN
+static const unsigned int H264_START_CODE = 0x01000000; // 本机是小端，在内存中就是00000001，也就是nalu的4字节起始码
+#else
+static const unsigned int H264_START_CODE = 0x00000001;
+#endif
 
 H264Decoder::H264Decoder()
 {
@@ -57,15 +66,19 @@ void H264Decoder::OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag)
 
     if (0 == avc_packet_type)
     {
-        media = ParseH264Configuration(media_len, flv_h264_tag);
+        // AVCDecoderConfigurationRecord.包含着是H.264解码相关比较重要的sps和pps信息，
+        // 在给AVC解码器送数据流之前一定要把sps和pps信息送出，否则的话解码器不能正常解码。
+        // 而且在解码器stop之后再次start之前，如seek、快进快退状态切换等，都需要重新送一遍sps和pps的信息。
+        // AVCDecoderConfigurationRecord在FLV文件中一般情况也是出现1次，也就是第一个video tag.
+        media = ParseAVCDecorderConfigurationRecord(media_len, flv_h264_tag);
     }
     else if (1 == avc_packet_type)
     {
-        media = ParseNalu(media_len, flv_h264_tag, nalu_len_size_);
+        media = ParseNalus(media_len, flv_h264_tag, nalu_len_size_);
     }
     else
     {
-        return; // TODO
+        return; // =2时为AVC end of sequence，无data
     }
 
     if (nullptr == media)
@@ -116,16 +129,27 @@ void H264Decoder::OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag)
     }
 }
 
-std::unique_ptr<unsigned char[]> H264Decoder::ParseH264Configuration(int& media_len, std::shared_ptr<flv::VideoTag> flv_h264_tag)
+std::unique_ptr<unsigned char[]> H264Decoder::ParseAVCDecorderConfigurationRecord(int& media_len, std::shared_ptr<flv::VideoTag> flv_h264_tag)
 {
-    // tag_data+5是h264数据的开始位置
-    // 举例：0x01+sps[1]+sps[2]+sps[3]+0xFF+0xE1+sps size+sps+01+pps size+pps。sps和pps可以有多个，一般只有1个
-
+    // | cfgVersion(8) | avcProfile(8) | profileCompatibility(8) |avcLevel(8) | reserved(6) | lengthSizeMinusOne(2) | reserved(3) | numOfSPS(5) |spsLength(16) | sps(n) | numOfPPS(8) | ppsLength(16) | pps(n) |
     const unsigned char* pd = (const unsigned char*) flv_h264_tag.get()->tag_data.data();
+
+    const int cfg_version = pd[5]; // tag_data+5是h264数据的开始位置
+    (void) cfg_version;
+    const int avc_profile = pd[6];
+    (void) avc_profile;
+    const int profile_compatibility = pd[7];
+    (void) profile_compatibility;
+    const int avc_level = pd[8];
+    (void) avc_level;
 
     nalu_len_size_ = (pd[9] & 0x03) + 1;
 
+    const int num_of_sps = (pd[10] & 0x1f); // 一般也只有1个，下面就当做一个来取了
+    (void) num_of_sps;
     const int sps_size = ShowU16(pd + 11);
+    const int num_of_pps = pd[11 + 2 + sps_size]; // 一般也只有1个，下面就当做一个来取了
+    (void) num_of_pps;
     const int pps_size = ShowU16(pd + 11 + (2 + sps_size) + 1);
 
     media_len = 4 + sps_size + 4 + pps_size;
@@ -146,7 +170,7 @@ std::unique_ptr<unsigned char[]> H264Decoder::ParseH264Configuration(int& media_
     return media;
 }
 
-std::unique_ptr<unsigned char[]> H264Decoder::ParseNalu(int& media_len, std::shared_ptr<flv::VideoTag> flv_h264_tag, int nalu_len_size)
+std::unique_ptr<unsigned char[]> H264Decoder::ParseNalus(int& media_len, std::shared_ptr<flv::VideoTag> flv_h264_tag, int nalu_len_size)
 {
     const unsigned char* pd = (const unsigned char*) flv_h264_tag.get()->tag_data.data();
 
