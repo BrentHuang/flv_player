@@ -36,4 +36,4 @@ void PcmPlayer::OnPcmReady(std::shared_ptr<Pcm> pcm)
     pcm_device_.OnPcmReady(pcm);
 }
 
-// TODO 播放完后为什么cpu还很高？
+// TODO 播放完后为什么CPU还很高？后续调研一下ffplay和qtav中文件解析与音视频播放进度是怎么同步的

@@ -44,6 +44,11 @@ H264Decoder::H264Decoder()
 
 H264Decoder::~H264Decoder()
 {
+    for (int i = 0; i < (int) vjj_sei_vec_.size(); i++)
+    {
+        delete vjj_sei_vec_[i].szUD;
+    }
+
     if (decoder_ != nullptr)
     {
         decoder_->Uninitialize();
@@ -223,9 +228,46 @@ std::unique_ptr<unsigned char[]> H264Decoder::ParseNalus(int& media_len, std::sh
 
         memcpy(data + media_len, &H264_START_CODE, 4);
         memcpy(data + media_len + 4, pd + offset + nalu_len_size, nalu_Len);
+        ParseSEI(data + media_len, 4 + nalu_Len, flv_h264_tag.get()->dts);
         media_len += (4 + nalu_Len);
         offset += (nalu_len_size + nalu_Len);
     }
 
     return media;
+}
+
+void H264Decoder::ParseSEI(unsigned char* nalu, int nalu_len, int dts)
+{
+    // 起始码之后的一个字节是nal header，值和含义如下：
+    // "0x06"，此时NRI为"00B"，NAL unit type为SEI类型。
+    // “0x67”，此时NRI为“11B”，NAL unit type为SPS类型。
+    // “0x68”，此时NRI为“11B”，NAL unit type为PPS类型。
+    // “0x65”，此时NRI为“11B”，NAL unit type为IDR图像。
+    if (nalu[4] != 0x06 || nalu[5] != 0x05) // "0x06"后一个字节为“0x05”，是SEI payload type，表示自定义消息
+    {
+        return;
+    }
+
+    // TODO https://blog.csdn.net/y601500359/article/details/80943990
+
+    unsigned char* pd = nalu + 4 + 2;
+    while (*pd++ == 0xff);
+
+    const char* videojj_uuid = "VideojjLeonUUID";
+    const char* p = (char*) pd;
+
+    for (int i = 0; i < (int) strlen(videojj_uuid); i++)
+    {
+        if (p[i] != videojj_uuid[i])
+        {
+            return;
+        }
+    }
+
+    VjjSEI sei;
+    sei.nTimeStamp = dts;
+    sei.nLen = nalu_len - (p - (char*) nalu) - 16 - 1;
+    sei.szUD = new char[sei.nLen];
+    memcpy(sei.szUD, p + 16, sei.nLen);
+    vjj_sei_vec_.push_back(sei);
 }

@@ -65,7 +65,7 @@ int MetadataTag::ParseECMAArray(const unsigned char* metadata)
         {
             case 0: // Number type，数据占sizeof(double)字节
             {
-                num_value = HexStr2double(metadata + offset, sizeof(double));
+                num_value = HexStr2Double(metadata + offset, sizeof(double));
                 offset += 8;
             }
             break;

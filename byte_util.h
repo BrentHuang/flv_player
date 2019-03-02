@@ -24,7 +24,7 @@ inline unsigned int ShowU8(const unsigned char* buf)
     return (buf[0]);
 }
 
-inline double HexStr2double(const unsigned char* hex, int length)
+inline double HexStr2Double(const unsigned char* hex, int length)
 {
     const int len = (length << 1) + 1;
     std::unique_ptr<char[]> hexstr(new char[len]);
