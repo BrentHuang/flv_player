@@ -1,13 +1,25 @@
-#ifndef FFMPEG_H264_DECODER_H
-#define FFMPEG_H264_DECODER_H
+#ifndef OPENH264_DECODER_H
+#define OPENH264_DECODER_H
 
 #include <vector>
-#include <wels/codec_api.h>
 #include <memory>
+
+#include <wels/codec_api.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
+#include <libavcodec/avcodec.h>
+#include <libswscale/swscale.h>
+#include <libavutil/imgutils.h>
+#ifdef __cplusplus
+}
+#endif
+
 #include "file/flv/video_tag.h"
 
-namespace ffmpeg
-{
 class H264Decoder
 {
 public:
@@ -22,7 +34,13 @@ private:
     void ParseSEI(unsigned char* nalu, int nalu_len, int dts);
 
 private:
+    // openh264
     ISVCDecoder* decoder_;
+
+    // ffmpeg
+    AVCodecContext* codec_ctx_;
+
+    //
     int nalu_len_size_;
 
     struct VjjSEI
@@ -34,6 +52,5 @@ private:
 
     std::vector<VjjSEI> vjj_sei_vec_;
 };
-}
 
-#endif // FFMPEG_H264_DECODER_H
+#endif // OPENH264_DECODER_H

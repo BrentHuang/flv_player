@@ -49,9 +49,16 @@ unix:!macx {
     }
 
     INCLUDEPATH += $${THIRD_PARTY_INSTALL_PREFIX}/fdk_aac/include \
-        $${THIRD_PARTY_INSTALL_PREFIX}/openh264/include
+        $${THIRD_PARTY_INSTALL_PREFIX}/openh264/include \
+        $${THIRD_PARTY_INSTALL_PREFIX}/ffmpeg/include
     LIBS += -L$${THIRD_PARTY_INSTALL_PREFIX}/fdk_aac/lib -lfdk-aac \
-        -L$${THIRD_PARTY_INSTALL_PREFIX}/openh264/lib -lopenh264
+        -L$${THIRD_PARTY_INSTALL_PREFIX}/openh264/lib -lopenh264 \
+        -L$${THIRD_PARTY_INSTALL_PREFIX}/ffmpeg/lib -lavcodec \
+        -L$${THIRD_PARTY_INSTALL_PREFIX}/ffmpeg/lib -lavformat \
+        -L$${THIRD_PARTY_INSTALL_PREFIX}/ffmpeg/lib -lavutil \
+        -L$${THIRD_PARTY_INSTALL_PREFIX}/ffmpeg/lib -lswscale \
+        -L$${THIRD_PARTY_INSTALL_PREFIX}/ffmpeg/lib -lswresample \
+        -L$${THIRD_PARTY_INSTALL_PREFIX}/x264/lib -lx264
 }
 
 SOURCES += \
@@ -69,12 +76,10 @@ SOURCES += \
     file/flv/video_tag.cpp \
     file/flv/audio_tag.cpp \
     video/video_decoders.cpp \
-    video/h264/openh264/openh264_decoder.cpp \
+    video/h264/h264_decoder.cpp \
     audio/audio_decoders.cpp \
-    audio/aac/fdkaac/fdkaac_dec.cpp \
-    audio/aac/fdkaac/fdkaac_decoder.cpp \
-    video/h264/ffmpeg/ffmpeg_h264_decoder.cpp \
-    audio/aac/ffmpeg/ffmpeg_aac_decoder.cpp
+    audio/aac/fdkaac_dec.cpp \
+    audio/aac/aac_decoder.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -96,11 +101,9 @@ HEADERS += \
     file/flv/video_tag.h \
     file/flv/audio_tag.h \
     video/video_decoders.h \
-    video/h264/openh264/openh264_decoder.h \
+    video/h264/h264_decoder.h \
     audio/audio_decoders.h \
-    audio/aac/fdkaac/fdkaac_decoder.h \
-    video/h264/ffmpeg/ffmpeg_h264_decoder.h \
-    audio/aac/ffmpeg/ffmpeg_aac_decoder.h
+    audio/aac/aac_decoder.h
 
 FORMS += \
         mainwindow.ui
