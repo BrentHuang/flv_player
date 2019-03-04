@@ -1,10 +1,12 @@
-#include "aac_decoder.h"
+#include "fdkaac_decoder.h"
 #include <QDebug>
 #include <QThread>
 #include "byte_util.h"
 #include "pcm.h"
 #include "signal_center.h"
 
+namespace fdkaac
+{
 struct adts_header_t
 {
     unsigned char syncword_0_to_8                       :   8;
@@ -202,7 +204,7 @@ std::unique_ptr<unsigned char[]> AACDecoder::ParseRawAAC(int& media_len, std::sh
     const int data_size = flv_aac_tag.get()->tag_head.data_size - 2;
     uint64_t bits = 0;
 
-    WriteU64(bits, 12, 0xFFF); // TODO 待分析
+    WriteU64(bits, 12, 0xFFF); // TODO AAC格式，待分析
     WriteU64(bits, 1, 0);
     WriteU64(bits, 2, 0);
     WriteU64(bits, 1, 1);
@@ -243,4 +245,5 @@ std::unique_ptr<unsigned char[]> AACDecoder::ParseRawAAC(int& media_len, std::sh
     memcpy(data + 7, flv_aac_tag.get()->tag_data.data() + 2, data_size);
 
     return media;
+}
 }

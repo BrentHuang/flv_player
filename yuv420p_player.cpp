@@ -18,6 +18,10 @@ Yuv420pPlayer::~Yuv420pPlayer()
 
 void Yuv420pPlayer::OnYuv420pReady(std::shared_ptr<Yuv420p> yuv420p)
 {
+    // 下列打印的数据显示，每个yuv420p大小为1179648字节(width*height*1.5)，播放时长为40毫秒
+//    const int yuv420p_size = yuv420p.get()->y.data.size() + yuv420p.get()->u.data.size() + yuv420p.get()->v.data.size();
+//    qDebug() << "yuv420p size: " << yuv420p_size << ", pts: " << yuv420p.get()->pts;
+
     Yuv420pCtx ctx = { yuv420p, 0, 0 };
     yuv420p_ctx_vec_.push_back(ctx);
 
@@ -65,18 +69,26 @@ void Yuv420pPlayer::OnTimer()
 
             Yuv420pCtx& current = yuv420p_ctx_vec_.front(); // 当前帧
 
-            if (delta > 200)
+            if (delta > 200) // TODO
             {
                 // 视频太快了，要减速
-                current.duration += 50;
+                qDebug() << "video should be slower, delta: " << delta;
+
+                current.duration += 50; // TODO
             }
-            else if (delta < -200)
+            else if (delta < -200) // TODO
             {
-                current.duration -= 50;
+                qDebug() << "video should be faster, delta: " << delta;
+
+                current.duration -= 50; // TODO
                 if (current.duration < 0)
                 {
                     current.duration = 0;
                 }
+            }
+            else
+            {
+                qDebug() << "delta: " << delta;
             }
 
             if (now >= current.play_time + current.duration)

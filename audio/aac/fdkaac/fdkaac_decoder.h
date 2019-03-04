@@ -1,5 +1,5 @@
-#ifndef AAC_DECODER_H
-#define AAC_DECODER_H
+#ifndef FDKAAC_DECODER_H
+#define FDKAAC_DECODER_H
 
 #include <memory>
 
@@ -15,6 +15,8 @@
 #include "file/flv/audio_tag.h"
 #include "fdkaac_dec.h"
 
+namespace fdkaac
+{
 class AACDecoder
 {
 public:
@@ -34,5 +36,6 @@ private:
     int sample_rate_index_;
     int channels_;
 };
+}
 
-#endif // AAC_DECODER_H
+#endif // FDKAAC_DECODER_H

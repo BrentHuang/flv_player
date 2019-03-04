@@ -1,10 +1,12 @@
-﻿#include "h264_decoder.h"
+﻿#include "ffmpeg_h264_decoder.h"
 #include <QDebug>
 #include <QThread>
 #include "byte_util.h"
 #include "yuv420p.h"
 #include "signal_center.h"
 
+namespace ffmpeg
+{
 //16bit宽的数0x1234在两种模式CPU内存中的存放方式（假设从地址0x4000开始存放）为：
 //内存地址  小端模式存放内容    大端模式存放内容
 //0x4000    0x34            0x12
@@ -270,4 +272,5 @@ void H264Decoder::ParseSEI(unsigned char* nalu, int nalu_len, int dts)
     sei.szUD = new char[sei.nLen];
     memcpy(sei.szUD, p + 16, sei.nLen);
     vjj_sei_vec_.push_back(sei);
+}
 }

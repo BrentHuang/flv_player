@@ -33,6 +33,8 @@ PcmPlayer::~PcmPlayer()
 
 void PcmPlayer::OnPcmReady(std::shared_ptr<Pcm> pcm)
 {
+    // 下列打印的数据显示，每个pcm大小为4096字节，播放时长为23毫秒
+//    qDebug() << "pcm size: " << pcm.get()->data.size() << ", pts: " << pcm.get()->pts;
     pcm_device_.OnPcmReady(pcm);
 }
 

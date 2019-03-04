@@ -1,11 +1,13 @@
-#ifndef H264_DECODER_H
-#define H264_DECODER_H
+#ifndef FFMPEG_H264_DECODER_H
+#define FFMPEG_H264_DECODER_H
 
 #include <vector>
 #include <wels/codec_api.h>
 #include <memory>
 #include "file/flv/video_tag.h"
 
+namespace ffmpeg
+{
 class H264Decoder
 {
 public:
@@ -32,5 +34,6 @@ private:
 
     std::vector<VjjSEI> vjj_sei_vec_;
 };
+}
 
-#endif // H264_DECODER_H
+#endif // FFMPEG_H264_DECODER_H
