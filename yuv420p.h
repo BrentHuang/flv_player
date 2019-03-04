@@ -33,14 +33,18 @@ struct Plane
 
 struct Yuv420p
 {
+    int flv_tag_idx;
     unsigned int pts;
     Plane y;
     Plane u;
     Plane v;
+    bool end;
 
     Yuv420p() : y(), u(), v()
     {
+        flv_tag_idx = 0;
         pts = 0;
+        end = false;
     }
 
     ~Yuv420p() {}

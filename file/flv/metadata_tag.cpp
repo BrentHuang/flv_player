@@ -16,7 +16,7 @@ int MetadataTag::Build(int tag_idx, const TagHead& tag_head, const unsigned char
 
     if ((int) pd[0] != 0x2 || ShowU16(&pd[1]) != 0x000a || strncmp((const char*) &pd[3], "onMetaData", 10) != 0)
     {
-        qDebug() << "invalid metadata tag";
+        qDebug() << __FILE__ << ":" << __LINE__ << "invalid metadata tag";
         return -1;
     }
 
@@ -56,7 +56,7 @@ int MetadataTag::ParseECMAArray(const unsigned char* metadata)
         std::unique_ptr<char[]> elem_name(new char[elem_name_len]);
         memcpy(elem_name.get(), metadata + offset, elem_name_len);
         offset += elem_name_len;
-//        qDebug() << elem_name.get();
+//        qDebug() << __FILE__ << ":" << __LINE__ << elem_name.get();
 
         const int elem_value_type = metadata[offset];
         offset += 1;
@@ -104,7 +104,7 @@ int MetadataTag::ParseECMAArray(const unsigned char* metadata)
             // TODO other types
             default:
             {
-                qDebug() << "elem value type: " << elem_value_type;
+                qDebug() << __FILE__ << ":" << __LINE__ << "elem value type: " << elem_value_type;
             }
             break;
         }
@@ -176,7 +176,7 @@ int MetadataTag::ParseECMAArray(const unsigned char* metadata)
         else
         {
             // TODO
-            qDebug() << "elem name: " << elem_name.get();
+            qDebug() << __FILE__ << ":" << __LINE__ << "elem name: " << elem_name.get();
         }
     }
 

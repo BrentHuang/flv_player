@@ -20,7 +20,7 @@ void Yuv420pPlayer::OnYuv420pReady(std::shared_ptr<Yuv420p> yuv420p)
 {
     // 下列打印的数据显示，每个yuv420p大小为1179648字节(width*height*1.5)，播放时长为40毫秒
 //    const int yuv420p_size = yuv420p.get()->y.data.size() + yuv420p.get()->u.data.size() + yuv420p.get()->v.data.size();
-//    qDebug() << "yuv420p size: " << yuv420p_size << ", pts: " << yuv420p.get()->pts;
+//    qDebug() << __FILE__ << ":" << __LINE__ << "yuv420p size: " << yuv420p_size << ", pts: " << yuv420p.get()->pts;
 
     Yuv420pCtx ctx = { yuv420p, 0, 0 };
     yuv420p_ctx_vec_.push_back(ctx);
@@ -53,8 +53,20 @@ void Yuv420pPlayer::OnTimer()
         {
             Yuv420pCtx& current = yuv420p_ctx_vec_.front();
             std::shared_ptr<Yuv420p> yuv420p = current.yuv420p;
+
+            if (yuv420p.get()->end)
+            {
+                yuv420p_ctx_vec_.pop_front();
+                return; // 结束了
+            }
+
+            // 直接播放第一帧
             emit SIGNAL_CENTER->Yuv420pPlay(yuv420p);
             current.play_time = AVSync::TimeNowMSec();
+
+            qDebug() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << yuv420p.get()->flv_tag_idx
+                     << ", video drift: " << AV_SYNC->video_drift
+                     << ", current frame pts: " << yuv420p->pts;
 
             AV_SYNC->video_drift = yuv420p->pts - AVSync::TimeNowMSec();
         }
@@ -69,16 +81,23 @@ void Yuv420pPlayer::OnTimer()
 
             Yuv420pCtx& current = yuv420p_ctx_vec_.front(); // 当前帧
 
+            qDebug() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx
+                     << "audio drift: " << AV_SYNC->audio_drift
+                     << ", video drift: " << AV_SYNC->video_drift
+                     << ", delta: " << delta;
+
             if (delta > 200) // TODO
             {
                 // 视频太快了，要减速
-                qDebug() << "video should be slower, delta: " << delta;
+                qDebug() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx
+                         << "video should be slower, delta: " << delta;
 
                 current.duration += 50; // TODO
             }
             else if (delta < -200) // TODO
             {
-                qDebug() << "video should be faster, delta: " << delta;
+                qDebug() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx
+                         << "video should be faster, delta: " << delta;
 
                 current.duration -= 50; // TODO
                 if (current.duration < 0)
@@ -88,19 +107,20 @@ void Yuv420pPlayer::OnTimer()
             }
             else
             {
-                qDebug() << "delta: " << delta;
+                qDebug() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx << ", delta: " << delta;
             }
 
             if (now >= current.play_time + current.duration)
             {
                 yuv420p_ctx_vec_.pop_front();
-
                 Yuv420pCtx& current = yuv420p_ctx_vec_.front();
                 std::shared_ptr<Yuv420p> yuv420p = current.yuv420p;
-                emit SIGNAL_CENTER->Yuv420pPlay(yuv420p);
-                current.play_time = AVSync::TimeNowMSec();
-
-                AV_SYNC->video_drift = yuv420p->pts - AVSync::TimeNowMSec();
+                if (!yuv420p.get()->end)
+                {
+                    emit SIGNAL_CENTER->Yuv420pPlay(yuv420p);
+                    current.play_time = AVSync::TimeNowMSec();
+                    AV_SYNC->video_drift = yuv420p->pts - AVSync::TimeNowMSec();
+                }
             }
         }
         break;

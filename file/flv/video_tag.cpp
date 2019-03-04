@@ -36,7 +36,7 @@ int VideoTag::Build(int tag_idx, const TagHead& tag_head, const unsigned char* b
 
         default:
         {
-            qDebug() << "vedio codec: " << codec_id;
+            qDebug() << __FILE__ << ":" << __LINE__ << "vedio codec: " << codec_id;
         }
         break;
     }

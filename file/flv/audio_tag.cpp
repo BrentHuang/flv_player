@@ -17,7 +17,7 @@ int AudioTag::Build(int tag_idx, const TagHead& tag_head, const unsigned char* b
     sound_rate = (pd[0] & 0x0c) >> 2;
     sound_size = (pd[0] & 0x02) >> 1;
     sound_type = (pd[0] & 0x01);
-//    qDebug() << "soundã€€type: " << sound_type;
+//    qDebug() << __FILE__ << ":" << __LINE__ << "soundã€€type: " << sound_type;
 
     int ret = -1;
 
@@ -32,7 +32,7 @@ int AudioTag::Build(int tag_idx, const TagHead& tag_head, const unsigned char* b
 
         default:
         {
-            qDebug() << "audio format: " << sound_format;
+            qDebug() << __FILE__ << ":" << __LINE__ << "audio format: " << sound_format;
         }
         break;
     }

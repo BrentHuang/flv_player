@@ -47,13 +47,13 @@ AACDecoder::AACDecoder()
 //    fdkaac_dec_ = new AacDecoder();
 //    if (nullptr == fdkaac_dec_)
 //    {
-//        qDebug() << "failed to alloc memory";
+//        qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
 //        return;
 //    }
 
 //    if (fdkaac_dec_->aacdec_init_adts() != 0)
 //    {
-//        qDebug() << "aacdec_init_adts failed";
+//        qDebug() << __FILE__ << ":" << __LINE__ << "aacdec_init_adts failed";
 //        return;
 //    }
 
@@ -75,7 +75,7 @@ AACDecoder::~AACDecoder()
 
 void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
 {
-//    qDebug() << "AACDecoder::OnFlvAacTagReady " << QThread::currentThreadId();
+//    qDebug() << __FILE__ << ":" << __LINE__ << "AACDecoder::OnFlvAacTagReady " << QThread::currentThreadId();
 
     const int aac_packet_type = flv_aac_tag.get()->tag_data[1];
     const unsigned int pts = flv_aac_tag.get()->dts;
@@ -105,7 +105,7 @@ void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
 //    std::unique_ptr<char[]> pcm_buf(new char[pcm_size_]);
 //    if (nullptr == pcm_buf)
 //    {
-//        qDebug() << "failed to alloc memory";
+//        qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
 //        return;
 //    }
 
@@ -159,7 +159,7 @@ void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
 //        std::shared_ptr<Pcm> pcm(new Pcm());
 //        if (NULL == pcm)
 //        {
-//            qDebug() << "failed to alloc memory";
+//            qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
 //            return;
 //        }
 
@@ -225,7 +225,7 @@ void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
 //    std::unique_ptr<unsigned char[]> media(new unsigned char[media_len]);
 //    if (NULL == media)
 //    {
-//        qDebug() << "failed to alloc memory";
+//        qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
 //        return nullptr;
 //    }
 

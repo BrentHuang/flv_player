@@ -34,8 +34,6 @@ PcmPlayer::~PcmPlayer()
 void PcmPlayer::OnPcmReady(std::shared_ptr<Pcm> pcm)
 {
     // 下列打印的数据显示，每个pcm大小为4096字节，播放时长为23毫秒
-//    qDebug() << "pcm size: " << pcm.get()->data.size() << ", pts: " << pcm.get()->pts;
+//    qDebug() << __FILE__ << ":" << __LINE__ << "pcm size: " << pcm.get()->data.size() << ", pts: " << pcm.get()->pts;
     pcm_device_.OnPcmReady(pcm);
 }
-
-// TODO 播放完后为什么CPU还很高？后续调研一下ffplay和qtav中文件解析与音视频播放进度是怎么同步的

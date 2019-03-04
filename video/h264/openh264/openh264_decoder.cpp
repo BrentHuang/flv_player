@@ -25,7 +25,7 @@ H264Decoder::H264Decoder()
 
     if (WelsCreateDecoder(&decoder_) != 0 || nullptr == decoder_)
     {
-        qDebug() << "WelsCreateDecoder failed";
+        qDebug() << __FILE__ << ":" << __LINE__ << "WelsCreateDecoder failed";
         return;
     }
 
@@ -37,7 +37,7 @@ H264Decoder::H264Decoder()
 
     if (decoder_->Initialize(&dec_param) != 0)
     {
-        qDebug() << "decode param initialize failed";
+        qDebug() << __FILE__ << ":" << __LINE__ << "decode param initialize failed";
         WelsDestroyDecoder(decoder_);
         decoder_ = nullptr;
         return;
@@ -61,7 +61,7 @@ H264Decoder::~H264Decoder()
 
 void H264Decoder::OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag)
 {
-//    qDebug() << "H264Decoder::OnFlvH264TagReady " << QThread::currentThreadId();
+//    qDebug() << __FILE__ << ":" << __LINE__ << "H264Decoder::OnFlvH264TagReady " << QThread::currentThreadId();
 
     const unsigned char* tag_data = (const unsigned char*) flv_h264_tag.get()->tag_data.data();
     const int avc_packet_type = tag_data[1];
@@ -85,7 +85,18 @@ void H264Decoder::OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag)
     }
     else
     {
-        return; // =2时为AVC end of sequence，无data
+        // =2时为AVC end of sequence，无data
+        std::shared_ptr<Yuv420p> yuv420p(new Yuv420p());
+        if (nullptr == yuv420p)
+        {
+            qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
+            return;
+        }
+
+        yuv420p.get()->end = true;
+        emit SIGNAL_CENTER->Yuv420pReady(yuv420p);
+
+        return;
     }
 
     if (nullptr == media)
@@ -102,7 +113,7 @@ void H264Decoder::OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag)
     DECODING_STATE ds = decoder_->DecodeFrame2(media.get(), media_len, data, &buf_info);
     if (ds != dsErrorFree)
     {
-        qDebug() << "h264 decode error";
+        qDebug() << __FILE__ << ":" << __LINE__ << "h264 decode error";
         return;
     }
 
@@ -111,7 +122,7 @@ void H264Decoder::OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag)
         std::shared_ptr<Yuv420p> yuv420p(new Yuv420p());
         if (nullptr == yuv420p)
         {
-            qDebug() << "failed to alloc memory";
+            qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
             return;
         }
 
@@ -130,7 +141,9 @@ void H264Decoder::OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag)
                          buf_info.UsrData.sSystemBuffer.iHeight >> 1,
                          buf_info.UsrData.sSystemBuffer.iStride[1]);
 
+        yuv420p.get()->flv_tag_idx = flv_h264_tag.get()->tag_idx;
         yuv420p.get()->pts = pts;
+        yuv420p.get()->end = false;
 
         emit SIGNAL_CENTER->Yuv420pReady(yuv420p);
     }
@@ -164,7 +177,7 @@ std::unique_ptr<unsigned char[]> H264Decoder::ParseAVCDecorderConfigurationRecor
     std::unique_ptr<unsigned char[]> media(new unsigned char[media_len]);
     if (NULL == media)
     {
-        qDebug() << "failed to alloc memory";
+        qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
         return nullptr;
     }
 
@@ -184,7 +197,7 @@ std::unique_ptr<unsigned char[]> H264Decoder::ParseNalus(int& media_len, std::sh
     std::unique_ptr<unsigned char[]> media(new unsigned char[flv_h264_tag.get()->tag_head.data_size + 10]);
     if (NULL == media)
     {
-        qDebug() << "failed to alloc memory";
+        qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
         return nullptr;
     }
 

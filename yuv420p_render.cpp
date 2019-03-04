@@ -37,38 +37,38 @@ void Yuv420pRender::initializeGL()
 
     if (!program_.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/yuv420p.vert"))
     {
-        qDebug() << "add shader failed";
+        qDebug() << __FILE__ << ":" << __LINE__ << "add shader failed";
         return;
     }
 
     if (QOpenGLContext::currentContext()->isOpenGLES())
     {
-        qDebug() << "opengl es";
+        qDebug() << __FILE__ << ":" << __LINE__ << "opengl es";
         if (!program_.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/yuv420p_es.frag"))
         {
-            qDebug() << "add shader failed";
+            qDebug() << __FILE__ << ":" << __LINE__ << "add shader failed";
             return;
         }
     }
     else
     {
-        qDebug() << "opengl desktop";
+        qDebug() << __FILE__ << ":" << __LINE__ << "opengl desktop";
         if (!program_.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/yuv420p_desktop.frag"))
         {
-            qDebug() << "add shader failed";
+            qDebug() << __FILE__ << ":" << __LINE__ << "add shader failed";
             return;
         }
     }
 
     if (!program_.link())
     {
-        qDebug() << "link shader failed";
+        qDebug() << __FILE__ << ":" << __LINE__ << "link shader failed";
         return;
     }
 
     if (!program_.bind())
     {
-        qDebug() << "bind shader failed";
+        qDebug() << __FILE__ << ":" << __LINE__ << "bind shader failed";
         return;
     }
 
@@ -88,7 +88,7 @@ void Yuv420pRender::resizeGL(int w, int h)
 
 void Yuv420pRender::paintGL()
 {
-//    qDebug() << "Yuv420pWidget::paintGL " << QThread::currentThreadId(); // 主线程中
+//    qDebug() << __FILE__ << ":" << __LINE__ << "Yuv420pWidget::paintGL " << QThread::currentThreadId(); // 主线程中
 
     if (nullptr == yuv420p_)
     {

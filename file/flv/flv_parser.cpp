@@ -22,13 +22,13 @@ FlvParser::~FlvParser()
 
 void FlvParser::OnFileOpen(const QString& file_path)
 {
-//    qDebug() << "FlvParser::OnFileOpen " << QThread::currentThreadId();
+//    qDebug() << __FILE__ << ":" << __LINE__ << "FlvParser::OnFileOpen " << QThread::currentThreadId();
 
     std::fstream fin;
     fin.open(file_path.toStdString(), std::ios_base::in | std::ios_base::binary);
     if (!fin)
     {
-        qDebug() << "failed to open file: " << file_path;
+        qDebug() << __FILE__ << ":" << __LINE__ << "failed to open file: " << file_path;
         return;
     }
 
@@ -36,7 +36,7 @@ void FlvParser::OnFileOpen(const QString& file_path)
     unsigned char* buf = new unsigned char[buf_size];
     if (NULL == buf)
     {
-        qDebug() << "failed to alloc memory";
+        qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
         fin.close();
         return;
     }
@@ -50,7 +50,7 @@ void FlvParser::OnFileOpen(const QString& file_path)
         const int read_len = fin.gcount();
         if (0 == read_len)
         {
-            qDebug() << "finished parsing file: " << file_path;
+            qDebug() << __FILE__ << ":" << __LINE__ << "finished parsing file: " << file_path;
             break;
         }
 
@@ -91,7 +91,7 @@ int FlvParser::Parse(int& used_len, const unsigned char* buf, int buf_size)
         flv_head_.reset(new FlvHead());
         if (nullptr == flv_head_)
         {
-            qDebug() << "failed to alloc memory";
+            qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
             return -1;
         }
 
@@ -129,6 +129,7 @@ int FlvParser::Parse(int& used_len, const unsigned char* buf, int buf_size)
             return -1;
         }
 
+        // TODO 调研一下ffplay和qtav中文件解析与音视频播放进度是怎么同步的
         GLOBAL->file_parse_mutex.lock();
 
         if (GLOBAL->pcm_size_in_queue >= Global::PCM_SIZE_TO_PAUSE_PARSING
@@ -182,7 +183,7 @@ std::shared_ptr<Tag> FlvParser::CreateTag(const unsigned char* buf, int left_len
 
         default:
         {
-            qDebug() << "invalid tag type: " << tag_head.type;
+            qDebug() << __FILE__ << ":" << __LINE__ << "invalid tag type: " << tag_head.type;
             return nullptr;
         }
         break;
@@ -190,7 +191,7 @@ std::shared_ptr<Tag> FlvParser::CreateTag(const unsigned char* buf, int left_len
 
     if (nullptr == tag)
     {
-        qDebug() << "failed to alloc memory";
+        qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
         return nullptr;
     }
 

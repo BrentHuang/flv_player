@@ -26,7 +26,7 @@ void PcmDevice::OnPcmReady(std::shared_ptr<Pcm> pcm)
 
 qint64 PcmDevice::readData(char* data, qint64 maxSize)
 {
-//    qDebug() << "PcmDevice::readData " << QThread::currentThreadId(); // 主线程中
+//    qDebug() << __FILE__ << ":" << __LINE__ << "PcmDevice::readData " << QThread::currentThreadId(); // 主线程中
 
     if (pcm_list_.empty())
     {
@@ -63,6 +63,7 @@ qint64 PcmDevice::readData(char* data, qint64 maxSize)
 
     AV_SYNC->consumed_pcm_size += total_size;
     AV_SYNC->audio_drift = (AV_SYNC->consumed_pcm_size) * 1000 / (44100 << 2) - AVSync::TimeNowMSec();
+    qDebug() << __FILE__ << ":" << __LINE__ << "audio drift: " << AV_SYNC->audio_drift;
 
     GLOBAL->file_parse_mutex.lock();
     GLOBAL->pcm_size_in_queue -= total_size;

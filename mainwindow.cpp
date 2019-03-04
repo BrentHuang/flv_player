@@ -43,7 +43,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
 void MainWindow::StartThreads()
 {
-    qDebug() << "MainWindow::StartThreads() " << QThread::currentThreadId();
+    qDebug() << __FILE__ << ":" << __LINE__ << "MainWindow::StartThreads() " << QThread::currentThreadId();
 
     file_parsers_ = new FileParsers();
     file_parsers_->moveToThread(&file_parse_thread_);
@@ -72,7 +72,7 @@ void MainWindow::StartThreads()
 
 void MainWindow::StopThreads()
 {
-    qDebug() << "MainWindow::StopThreads() " << QThread::currentThreadId();
+    qDebug() << __FILE__ << ":" << __LINE__ << "MainWindow::StopThreads() " << QThread::currentThreadId();
 
     // disconnect线程间通信的信号和槽
     disconnect(SIGNAL_CENTER, &SignalCenter::FlvFileOpen, file_parsers_, &FileParsers::OnFlvFileOpen);

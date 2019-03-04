@@ -10,7 +10,7 @@ int FlvHead::Build(const unsigned char* buf, int left_len)
 
     if (buf[0] != 'F' || buf[1] != 'L' || buf[2] != 'V')
     {
-        qDebug() << "not flv file";
+        qDebug() << __FILE__ << ":" << __LINE__ << "not flv file";
         return -1;
     }
 

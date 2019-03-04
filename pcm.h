@@ -5,11 +5,13 @@
 
 struct Pcm
 {
+    int flv_tag_idx;
     unsigned int pts;
     std::string data;
 
     Pcm() : data()
     {
+        flv_tag_idx = 0;
         pts = 0;
     }
 
