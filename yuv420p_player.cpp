@@ -30,7 +30,10 @@ void Yuv420pPlayer::OnYuv420pReady(std::shared_ptr<Yuv420p> yuv420p)
     {
         Yuv420pCtx& current = yuv420p_ctx_vec_[vec_size - 1];
         Yuv420pCtx& prev = yuv420p_ctx_vec_[vec_size - 2];
-        current.duration = current.yuv420p.get()->pts - prev.yuv420p.get()->pts;
+        current.duration = current.yuv420p.get()->pts - prev.yuv420p.get()->pts; // 或者直接用fps算。H264视频每帧的播放时间frame_duration = 1000/fps，单位：毫秒
+
+//        AAC音频每帧的播放时间frame_duration = 一个AAC帧对应的采样样本的个数 * 1000 / 采样频率，单位：毫秒
+//        AAC音频每帧的采样点个数为1024。
     }
 
     GLOBAL->file_parse_mutex.lock();
@@ -92,14 +95,14 @@ void Yuv420pPlayer::OnTimer()
                 qDebug() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx
                          << "video should be slower, delta: " << delta;
 
-                current.duration += 50; // TODO
+                current.duration += 100; // TODO 其它策略
             }
             else if (delta < -200) // TODO
             {
                 qDebug() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx
                          << "video should be faster, delta: " << delta;
 
-                current.duration -= 50; // TODO
+                current.duration -= 100; // TODO
                 if (current.duration < 0)
                 {
                     current.duration = 0;

@@ -33,6 +33,10 @@ qint64 PcmDevice::readData(char* data, qint64 maxSize)
         return 0;
     }
 
+    // 声卡消费了的pcm_size字节数据所经历的时间 = consumed_pcm_size * 1000 / (采样率44100 * 采样精度16 / 8 * 声道数2)
+    AV_SYNC->audio_drift = AV_SYNC->consumed_pcm_size * 1000 / (44100 << 2) - AVSync::TimeNowMSec(); // TODO 参数都是写死的
+    qDebug() << __FILE__ << ":" << __LINE__ << "audio drift: " << AV_SYNC->audio_drift << ", now: " << AVSync::TimeNowMSec();
+
     qint64 total_size = 0;
 
     while (maxSize - total_size > 0)
@@ -61,19 +65,20 @@ qint64 PcmDevice::readData(char* data, qint64 maxSize)
         total_size += chunk_size;
     }
 
-    AV_SYNC->consumed_pcm_size += total_size;
-    AV_SYNC->audio_drift = (AV_SYNC->consumed_pcm_size) * 1000 / (44100 << 2) - AVSync::TimeNowMSec();
-    qDebug() << __FILE__ << ":" << __LINE__ << "audio drift: " << AV_SYNC->audio_drift;
-
-    GLOBAL->file_parse_mutex.lock();
-    GLOBAL->pcm_size_in_queue -= total_size;
-
-    if (GLOBAL->pcm_size_in_queue <= Global::PCM_SIZE_TO_RESUME_PARSING)
+    if (total_size > 0)
     {
-        GLOBAL->file_parse_cond.wakeAll();
-    }
+        AV_SYNC->consumed_pcm_size += total_size;
 
-    GLOBAL->file_parse_mutex.unlock();
+        GLOBAL->file_parse_mutex.lock();
+        GLOBAL->pcm_size_in_queue -= total_size;
+
+        if (GLOBAL->pcm_size_in_queue <= Global::PCM_SIZE_TO_RESUME_PARSING)
+        {
+            GLOBAL->file_parse_cond.wakeAll();
+        }
+
+        GLOBAL->file_parse_mutex.unlock();
+    }
 
     return total_size;
 }
