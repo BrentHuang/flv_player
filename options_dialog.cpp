@@ -8,6 +8,7 @@ OptionsDialog::OptionsDialog(QWidget* parent) :
 {
     ui->setupUi(this);
 
+    setWindowTitle("Options");
     setWindowFlags((windowFlags() & ~Qt::WindowContextHelpButtonHint) | Qt::MSWindowsFixedSizeDialogHint);
     ui->radioButton->setChecked(AUDIO_DECODER_FDKAAC == GLOBAL->config.GetAudioDecoderId());
     ui->radioButton_2->setChecked(AUDIO_DECODER_FFMPEG == GLOBAL->config.GetAudioDecoderId());

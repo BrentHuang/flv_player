@@ -19,6 +19,7 @@ extern "C" {
 #endif
 
 #include "file/flv/video_tag.h"
+#include "yuv420p.h"
 
 class H264Decoder
 {
@@ -35,6 +36,9 @@ private:
     std::unique_ptr<unsigned char[]> ParseAVCDecorderConfigurationRecord(int& media_len, std::shared_ptr<flv::VideoTag> flv_h264_tag);
     std::unique_ptr<unsigned char[]> ParseNalus(int& media_len, std::shared_ptr<flv::VideoTag> flv_h264_tag, int nalu_len_size);
     void ParseSEI(unsigned char* nalu, int nalu_len, int dts);
+
+    std::shared_ptr<Yuv420p> DecodeByOpenH264(const unsigned char* media, int media_len, int flv_tag_idx, unsigned int pts);
+    std::shared_ptr<Yuv420p> DecodeByFFMpeg(const unsigned char* media, int media_len, int flv_tag_idx, unsigned int pts);
 
 private:
     // openh264

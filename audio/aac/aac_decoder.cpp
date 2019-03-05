@@ -1,4 +1,4 @@
-#include "aac_decoder.h"
+﻿#include "aac_decoder.h"
 #include <QDebug>
 #include <QThread>
 
@@ -166,7 +166,7 @@ void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
 
     if (AUDIO_DECODER_FDKAAC == GLOBAL->config.GetAudioDecoderId())
     {
-        std::vector<std::shared_ptr<Pcm>> pcm_vec = DecodeByFdkaac(media.get(), media_len, flv_aac_tag.get()->tag_idx, pts);
+        std::vector<std::shared_ptr<Pcm>> pcm_vec = DecodeByFdkAac(media.get(), media_len, flv_aac_tag.get()->tag_idx, pts);
 
         for (int i = 0; i < (int) pcm_vec.size(); ++i)
         {
@@ -176,7 +176,11 @@ void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
     else
     {
         std::shared_ptr<Pcm> pcm = DecodeByFFMpeg(media.get(), media_len, flv_aac_tag.get()->tag_idx, pts);
-        emit SIGNAL_CENTER->PcmReady(pcm);
+
+        if (pcm != nullptr)
+        {
+            emit SIGNAL_CENTER->PcmReady(pcm);
+        }
     }
 }
 
@@ -241,7 +245,7 @@ std::unique_ptr<unsigned char[]> AACDecoder::ParseRawAAC(int& media_len, std::sh
     return media;
 }
 
-std::vector<std::shared_ptr<Pcm>> AACDecoder::DecodeByFdkaac(const unsigned char* media, int media_len, int flv_tag_idx, unsigned int pts)
+std::vector<std::shared_ptr<Pcm>> AACDecoder::DecodeByFdkAac(const unsigned char* media, int media_len, int flv_tag_idx, unsigned int pts)
 {
     std::vector<std::shared_ptr<Pcm>> pcm_vec;
     char* aac_buf = (char*) media;
@@ -388,7 +392,7 @@ std::shared_ptr<Pcm> AACDecoder::DecodeByFFMpeg(const unsigned char* media, int 
 
     if (nullptr == au_convert_ctx_)
     {
-        au_convert_ctx_ = swr_alloc();
+        au_convert_ctx_ = swr_alloc(); // TODO 这里有内存泄露，初始化移到Initialize中去
 
         int64_t channels_layout = av_get_default_channel_layout(frame->channels);
         AVSampleFormat out_fmt = AV_SAMPLE_FMT_S16;

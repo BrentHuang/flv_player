@@ -3,8 +3,8 @@
 
 Config::Config()
 {
-    audio_decoder_id_ = AUDIO_DECODER_FDKAAC;
-    video_decoder_id_ = VIDEO_DECODER_OPENH264;
+    audio_decoder_id_ = AUDIO_DECODER_FFMPEG;
+    video_decoder_id_ = VIDEO_DECODER_FFMPEG;
 }
 
 void Config::SetAudioDecoderId(int audio_decoder_id)
