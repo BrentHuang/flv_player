@@ -35,7 +35,7 @@ qint64 PcmDevice::readData(char* data, qint64 maxSize)
 
     // 声卡消费了的pcm_size字节数据所经历的时间 = consumed_pcm_size * 1000 / (采样率44100 * 采样精度16 / 8 * 声道数2)
     AV_SYNC->audio_drift = AV_SYNC->consumed_pcm_size * 1000 / (44100 << 2) - AVSync::TimeNowMSec(); // TODO 参数都是写死的
-    qDebug() << __FILE__ << ":" << __LINE__ << "audio drift: " << AV_SYNC->audio_drift << ", now: " << AVSync::TimeNowMSec();
+//    qDebug() << __FILE__ << ":" << __LINE__ << "audio drift: " << AV_SYNC->audio_drift << ", now: " << AVSync::TimeNowMSec();
 
     qint64 total_size = 0;
 

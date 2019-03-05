@@ -18,15 +18,22 @@ static const unsigned int H264_START_CODE = 0x00000001;
 
 H264Decoder::H264Decoder() : vjj_sei_vec_()
 {
-    nalu_len_size_ = 0;
-
-    // openh264
     decoder_ = nullptr;
+    codec_ctx_ = nullptr;
+    nalu_len_size_ = 0;
+}
 
+H264Decoder::~H264Decoder()
+{
+}
+
+int H264Decoder::Initialize()
+{
+    // openh264
     if (WelsCreateDecoder(&decoder_) != 0 || nullptr == decoder_)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "WelsCreateDecoder failed";
-        return;
+        return -1;
     }
 
     SDecodingParam dec_param;
@@ -38,9 +45,7 @@ H264Decoder::H264Decoder() : vjj_sei_vec_()
     if (decoder_->Initialize(&dec_param) != 0)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "decode param initialize failed";
-        WelsDestroyDecoder(decoder_);
-        decoder_ = nullptr;
-        return;
+        return -1;
     }
 
     // ffmpeg
@@ -48,14 +53,14 @@ H264Decoder::H264Decoder() : vjj_sei_vec_()
     if (nullptr == codec)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "avcodec_find_decoder failed";
-        return;
+        return -1;
     }
 
     codec_ctx_ = avcodec_alloc_context3(codec);
     if (nullptr == codec_ctx_)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "avcodec_alloc_context3 failed";
-        return;
+        return -1;
     }
 
     codec_ctx_->pix_fmt = AV_PIX_FMT_YUV420P;
@@ -63,11 +68,13 @@ H264Decoder::H264Decoder() : vjj_sei_vec_()
     if (avcodec_open2(codec_ctx_, codec, NULL) < 0)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "avcodec_open2 failed";
-        return;
+        return -1;
     }
+
+    return 0;
 }
 
-H264Decoder::~H264Decoder()
+void H264Decoder::Finalize()
 {
     for (int i = 0; i < (int) vjj_sei_vec_.size(); i++)
     {

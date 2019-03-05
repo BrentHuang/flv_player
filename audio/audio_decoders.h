@@ -14,6 +14,10 @@ public:
     AudioDecoders();
     virtual ~AudioDecoders();
 
+private:
+    int Initialize();
+    void Finalize();
+
 public slots:
     void OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag);
 

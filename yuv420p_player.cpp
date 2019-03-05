@@ -84,10 +84,10 @@ void Yuv420pPlayer::OnTimer()
 
             Yuv420pCtx& current = yuv420p_ctx_vec_.front(); // 当前帧
 
-            qDebug() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx
-                     << "audio drift: " << AV_SYNC->audio_drift
-                     << ", video drift: " << AV_SYNC->video_drift
-                     << ", delta: " << delta;
+//            qDebug() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx
+//                     << "audio drift: " << AV_SYNC->audio_drift
+//                     << ", video drift: " << AV_SYNC->video_drift
+//                     << ", delta: " << delta;
 
             if (delta > 200) // TODO
             {
@@ -110,7 +110,7 @@ void Yuv420pPlayer::OnTimer()
             }
             else
             {
-                qDebug() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx << ", delta: " << delta;
+//                qDebug() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx << ", delta: " << delta;
             }
 
             if (now >= current.play_time + current.duration)

@@ -14,6 +14,10 @@ public:
     VideoDecoders();
     virtual ~VideoDecoders();
 
+private:
+    int Initialize();
+    void Finalize();
+
 public slots:
     void OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag);
 

@@ -29,6 +29,8 @@ public:
 private slots:
     void on_actionOpen_triggered();
 
+    void on_actionOptions_triggered();
+
 private:
     void StartThreads();
     void StopThreads();

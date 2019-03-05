@@ -4,9 +4,11 @@
 #include <QWaitCondition>
 #include <QMutex>
 #include "singleton.h"
+#include "config.h"
 
 struct Global
 {
+    // 文件解析线程、播放线程之间的同步
     QWaitCondition file_parse_cond;
     QMutex file_parse_mutex;
 
@@ -20,7 +22,9 @@ struct Global
     static const int YUV420P_COUNT_TO_RESUME_PARSING = 5;
     int yuv420p_count_in_queue;
 
-    Global() : file_parse_cond(), file_parse_mutex()
+    Config config;
+
+    Global() : file_parse_cond(), file_parse_mutex(), config()
     {
         app_exit = false;
         pcm_size_in_queue = 0;

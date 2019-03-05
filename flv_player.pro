@@ -63,7 +63,7 @@ unix:!macx {
 
 SOURCES += \
     main.cpp \
-    mainwindow.cpp \
+    main_window.cpp \
     signal_center.cpp \
     yuv420p_render.cpp \
     yuv420p_player.cpp \
@@ -79,10 +79,12 @@ SOURCES += \
     video/h264/h264_decoder.cpp \
     audio/audio_decoders.cpp \
     audio/aac/fdkaac_dec.cpp \
-    audio/aac/aac_decoder.cpp
+    audio/aac/aac_decoder.cpp \
+    options_dialog.cpp \
+    config.cpp
 
 HEADERS += \
-    mainwindow.h \
+    main_window.h \
     byte_util.h \
     singleton.h \
     signal_center.h \
@@ -103,10 +105,13 @@ HEADERS += \
     video/video_decoders.h \
     video/h264/h264_decoder.h \
     audio/audio_decoders.h \
-    audio/aac/aac_decoder.h
+    audio/aac/aac_decoder.h \
+    options_dialog.h \
+    config.h
 
 FORMS += \
-        mainwindow.ui
+    options_dialog.ui \
+    main_window.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -1,7 +1,8 @@
-#ifndef FDKAAC_DECODER_H
-#define FDKAAC_DECODER_H
+#ifndef AAC_DECODER_H
+#define AAC_DECODER_H
 
 #include <memory>
+#include <vector>
 #include <qsystemdetection.h>
 
 #if defined(Q_OS_WIN)
@@ -27,18 +28,24 @@ extern "C" {
 
 #include "file/flv/audio_tag.h"
 #include "fdkaac_dec.h"
+#include "pcm.h"
 
 class AACDecoder
 {
 public:
     AACDecoder();
-    virtual ~AACDecoder();
+    ~AACDecoder();
+
+    int Initialize();
+    void Finalize();
 
     void OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag);
 
 private:
     std::unique_ptr<unsigned char[]> ParseAudioSpecificConfig(int& media_len, std::shared_ptr<flv::AudioTag> flv_aac_tag);
     std::unique_ptr<unsigned char[]> ParseRawAAC(int& media_len, std::shared_ptr<flv::AudioTag> flv_aac_tag, int aac_profile, int sample_rate_index, int channels);
+
+    std::vector<std::shared_ptr<Pcm>> DecodeByFdkaac(const unsigned char* media, int media_len, int flv_tag_idx, unsigned int pts);
 
 private:
     // fdkaac
@@ -50,9 +57,10 @@ private:
 
     //
     int fdkaac_pcm_size_;
+
     int aac_profile_;
     int sample_rate_index_;
     int channels_;
 };
 
-#endif // FDKAAC_DECODER_H
+#endif // AAC_DECODER_H

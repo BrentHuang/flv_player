@@ -1,9 +1,10 @@
-﻿#include "mainwindow.h"
+﻿#include "main_window.h"
 #include <QFileDialog>
 #include <QMessageBox>
-#include "ui_mainwindow.h"
+#include "ui_main_window.h"
 #include "signal_center.h"
 #include "global.h"
+#include "options_dialog.h"
 
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent),
@@ -104,4 +105,10 @@ void MainWindow::on_actionOpen_triggered()
     this->ui->statusBar->showMessage(file_path);
 
     emit SIGNAL_CENTER->FlvFileOpen(file_path);
+}
+
+void MainWindow::on_actionOptions_triggered()
+{
+    OptionsDialog options_dialog;
+    options_dialog.exec(); // show(): 非模态  open(): 半模态  exec(): 模态
 }

@@ -11,8 +11,8 @@ extern "C" {
 #endif
 
 #include "byte_util.h"
-#include "pcm.h"
 #include "signal_center.h"
+#include "global.h"
 
 struct adts_header_t
 {
@@ -48,22 +48,33 @@ struct adts_header_t
 
 AACDecoder::AACDecoder()
 {
+    fdkaac_dec_ = nullptr;
+    codec_ctx_ = nullptr;
+    au_convert_ctx_ = nullptr;
+    fdkaac_pcm_size_ = 0;
     aac_profile_ = 0;
     sample_rate_index_ = 0;
     channels_ = 0;
+}
 
+AACDecoder::~AACDecoder()
+{
+}
+
+int AACDecoder::Initialize()
+{
     // fdkaac
     fdkaac_dec_ = new AacDecoder();
     if (nullptr == fdkaac_dec_)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
-        return;
+        return -1;
     }
 
     if (fdkaac_dec_->aacdec_init_adts() != 0)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "aacdec_init_adts failed";
-        return;
+        return -1;
     }
 
     fdkaac_pcm_size_ = fdkaac_dec_->aacdec_pcm_size();
@@ -77,31 +88,35 @@ AACDecoder::AACDecoder()
     if (nullptr == codec)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "avcodec_find_decoder failed";
-        return;
+        return -1;
     }
 
     codec_ctx_ = avcodec_alloc_context3(codec);
-    if (!codec_ctx_)
+    if (nullptr == codec_ctx_)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "avcodec_alloc_context3 failed";
-        return;
+        return -1;
     }
+
 
     codec_ctx_->codec_type = AVMEDIA_TYPE_AUDIO;
     codec_ctx_->sample_rate = 44100;
     codec_ctx_->channels = 2;
     codec_ctx_->bit_rate = 16;
     codec_ctx_->sample_fmt = AV_SAMPLE_FMT_S16;
+
     if (avcodec_open2(codec_ctx_, codec, NULL) < 0)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "avcodec_open2 failed";
-        return;
+        return -1;
     }
 
     au_convert_ctx_ = nullptr;
+
+    return 0;
 }
 
-AACDecoder::~AACDecoder()
+void AACDecoder::Finalize()
 {
     // fdkaac
     if (fdkaac_dec_ != nullptr)
@@ -120,6 +135,7 @@ AACDecoder::~AACDecoder()
     if (au_convert_ctx_ != nullptr)
     {
         swr_close(au_convert_ctx_);
+        au_convert_ctx_ = nullptr;
     }
 }
 
@@ -148,81 +164,13 @@ void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
         return;
     }
 
-    bool use_fdkaac = false;
-
-    if (use_fdkaac)
+    if (AUDIO_DECODER_FDKAAC == GLOBAL->config.GetAudioDecoderId())
     {
-        char* aac_buf = (char*) media.get();
-        const int aac_size = media_len;
-        int pos = 0;
+        std::vector<std::shared_ptr<Pcm>> pcm_vec = DecodeByFdkaac(media.get(), media_len, flv_aac_tag.get()->tag_idx, pts);
 
-        std::unique_ptr<char[]> pcm_buf(new char[fdkaac_pcm_size_]);
-        if (nullptr == pcm_buf)
+        for (int i = 0; i < (int) pcm_vec.size(); ++i)
         {
-            qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
-            return;
-        }
-
-        forever
-        {
-            if (aac_size - pos < 7)
-            {
-                break;
-            }
-
-            adts_header_t* adts = (adts_header_t*)(&aac_buf[0] + pos);
-
-            if (adts->syncword_0_to_8 != 0xff || adts->syncword_9_to_12 != 0xf)
-            {
-                break;
-            }
-
-            const int aac_frame_size = adts->frame_length_0_to_1 << 11 | adts->frame_length_2_to_9 << 3 | adts->frame_length_10_to_12;
-            if (pos + aac_frame_size > aac_size)
-            {
-                break;
-            }
-
-            int left_size = aac_frame_size;
-            int ret = fdkaac_dec_->aacdec_fill(&aac_buf[0] + pos, aac_frame_size, &left_size);
-            pos += aac_frame_size;
-
-            if (ret != 0)
-            {
-                continue;
-            }
-
-            if (left_size > 0)
-            {
-                continue;
-            }
-
-            int valid_size = 0;
-            ret = fdkaac_dec_->aacdec_decode_frame(pcm_buf.get(), fdkaac_pcm_size_, &valid_size);
-
-            if (ret == AAC_DEC_NOT_ENOUGH_BITS)
-            {
-                continue;
-            }
-
-            if (ret != 0)
-            {
-                continue;
-            }
-
-            std::shared_ptr<Pcm> pcm(new Pcm());
-            if (NULL == pcm)
-            {
-                qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
-                return;
-            }
-
-            pcm->Build((const unsigned char*) pcm_buf.get(), valid_size);
-
-            pcm.get()->flv_tag_idx = flv_aac_tag.get()->tag_idx;
-            pcm.get()->pts = pts;
-
-            emit SIGNAL_CENTER->PcmReady(pcm);
+            emit SIGNAL_CENTER->PcmReady(pcm_vec[i]);
         }
     }
     else
@@ -429,4 +377,83 @@ std::unique_ptr<unsigned char[]> AACDecoder::ParseRawAAC(int& media_len, std::sh
     memcpy(data + 7, flv_aac_tag.get()->tag_data.data() + 2, data_size);
 
     return media;
+}
+
+std::vector<std::shared_ptr<Pcm>> AACDecoder::DecodeByFdkaac(const unsigned char* media, int media_len, int flv_tag_idx, unsigned int pts)
+{
+    std::vector<std::shared_ptr<Pcm>> pcm_vec;
+    char* aac_buf = (char*) media;
+    const int aac_size = media_len;
+    int pos = 0;
+
+    std::unique_ptr<char[]> pcm_buf(new char[fdkaac_pcm_size_]);
+    if (nullptr == pcm_buf)
+    {
+        qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
+        return pcm_vec;
+    }
+
+    forever
+    {
+        if (aac_size - pos < 7)
+        {
+            break;
+        }
+
+        adts_header_t* adts = (adts_header_t*)(&aac_buf[0] + pos);
+
+        if (adts->syncword_0_to_8 != 0xff || adts->syncword_9_to_12 != 0xf)
+        {
+            break;
+        }
+
+        const int aac_frame_size = adts->frame_length_0_to_1 << 11 | adts->frame_length_2_to_9 << 3 | adts->frame_length_10_to_12;
+        if (pos + aac_frame_size > aac_size)
+        {
+            break;
+        }
+
+        int left_size = aac_frame_size;
+        int ret = fdkaac_dec_->aacdec_fill(&aac_buf[0] + pos, aac_frame_size, &left_size);
+        pos += aac_frame_size;
+
+        if (ret != 0)
+        {
+            continue;
+        }
+
+        if (left_size > 0)
+        {
+            continue;
+        }
+
+        int valid_size = 0;
+        ret = fdkaac_dec_->aacdec_decode_frame(pcm_buf.get(), fdkaac_pcm_size_, &valid_size);
+
+        if (ret == AAC_DEC_NOT_ENOUGH_BITS)
+        {
+            continue;
+        }
+
+        if (ret != 0)
+        {
+            continue;
+        }
+
+        std::shared_ptr<Pcm> pcm(new Pcm());
+        if (NULL == pcm)
+        {
+            qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
+            return pcm_vec;
+        }
+
+        pcm->Build((const unsigned char*) pcm_buf.get(), valid_size);
+
+        pcm.get()->flv_tag_idx = flv_tag_idx;
+        pcm.get()->pts = pts;
+
+        pcm_vec.push_back(pcm);
+    }
+
+    return pcm_vec;
 }

@@ -1,5 +1,5 @@
-#ifndef OPENH264_DECODER_H
-#define OPENH264_DECODER_H
+#ifndef H264_DECODER_H
+#define H264_DECODER_H
 
 #include <vector>
 #include <memory>
@@ -25,6 +25,9 @@ class H264Decoder
 public:
     H264Decoder();
     ~H264Decoder();
+
+    int Initialize();
+    void Finalize();
 
     void OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag);
 
@@ -53,4 +56,4 @@ private:
     std::vector<VjjSEI> vjj_sei_vec_;
 };
 
-#endif // OPENH264_DECODER_H
+#endif // H264_DECODER_H
