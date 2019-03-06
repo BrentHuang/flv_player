@@ -46,7 +46,7 @@ private:
     std::unique_ptr<unsigned char[]> ParseRawAAC(int& media_len, std::shared_ptr<flv::AudioTag> flv_aac_tag, int aac_profile, int sample_rate_index, int channels);
 
     std::vector<std::shared_ptr<Pcm>> DecodeByFdkAac(const unsigned char* media, int media_len, int flv_tag_idx, unsigned int pts);
-    std::shared_ptr<Pcm> DecodeByFFMpeg(const unsigned char* media, int media_len, int flv_tag_idx, unsigned int pts);
+    std::vector<std::shared_ptr<Pcm>> DecodeByFFMpeg(const unsigned char* media, int media_len, int flv_tag_idx, unsigned int pts);
 
 private:
     // fdkaac
@@ -54,7 +54,6 @@ private:
 
     // ffmpeg
     AVCodecContext* codec_ctx_;
-    struct SwrContext* au_convert_ctx_;
 
     //
     int fdkaac_pcm_size_;

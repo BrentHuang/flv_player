@@ -34,7 +34,7 @@ void FlvParser::OnFileOpen(const QString& file_path)
 
     const int buf_size = 128 * 1024;
     unsigned char* buf = new unsigned char[buf_size];
-    if (NULL == buf)
+    if (nullptr == buf)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
         fin.close();
@@ -80,7 +80,7 @@ int FlvParser::Parse(int& used_len, const unsigned char* buf, int buf_size)
 {
     int offset = 0;
 
-    if (NULL == flv_head_)
+    if (nullptr == flv_head_)
     {
         if ((buf_size - offset) < FLV_HEAD_LEN)
         {

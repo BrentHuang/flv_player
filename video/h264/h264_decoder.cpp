@@ -65,7 +65,7 @@ int H264Decoder::Initialize()
 
     codec_ctx_->pix_fmt = AV_PIX_FMT_YUV420P;
 
-    if (avcodec_open2(codec_ctx_, codec, NULL) < 0)
+    if (avcodec_open2(codec_ctx_, codec, nullptr) < 0)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "avcodec_open2 failed";
         return -1;
@@ -132,8 +132,8 @@ void H264Decoder::OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag)
         }
 
         yuv420p.get()->end = true;
-        emit SIGNAL_CENTER->Yuv420pReady(yuv420p);
 
+        emit SIGNAL_CENTER->Yuv420pReady(yuv420p);
         return;
     }
 
@@ -144,13 +144,24 @@ void H264Decoder::OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag)
 
     std::shared_ptr<Yuv420p> yuv420p;
 
-    if (VIDEO_DECODER_OPENH264 == GLOBAL->config.GetVideoDecoderId())
+    switch (GLOBAL->config.GetVideoDecoderId())
     {
-        yuv420p = DecodeByOpenH264(media.get(), media_len, flv_h264_tag.get()->tag_idx, pts);
-    }
-    else
-    {
-        yuv420p = DecodeByFFMpeg(media.get(), media_len, flv_h264_tag.get()->tag_idx, pts);
+        case VIDEO_DECODER_OPENH264:
+        {
+            yuv420p = DecodeByOpenH264(media.get(), media_len, flv_h264_tag.get()->tag_idx, pts);
+        }
+        break;
+
+        case VIDEO_DECODER_FFMPEG:
+        {
+            yuv420p = DecodeByFFMpeg(media.get(), media_len, flv_h264_tag.get()->tag_idx, pts);
+        }
+        break;
+
+        default:
+        {
+        }
+        break;
     }
 
     if (yuv420p != nullptr)
@@ -185,7 +196,7 @@ std::unique_ptr<unsigned char[]> H264Decoder::ParseAVCDecorderConfigurationRecor
     media_len = 4 + sps_size + 4 + pps_size;
 
     std::unique_ptr<unsigned char[]> media(new unsigned char[media_len]);
-    if (NULL == media)
+    if (nullptr == media)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
         return nullptr;
@@ -205,7 +216,7 @@ std::unique_ptr<unsigned char[]> H264Decoder::ParseNalus(int& media_len, std::sh
     const unsigned char* pd = (const unsigned char*) flv_h264_tag.get()->tag_data.data();
 
     std::unique_ptr<unsigned char[]> media(new unsigned char[flv_h264_tag.get()->tag_head.data_size + 10]);
-    if (NULL == media)
+    if (nullptr == media)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
         return nullptr;
@@ -312,41 +323,39 @@ std::shared_ptr<Yuv420p> H264Decoder::DecodeByOpenH264(const unsigned char* medi
         return nullptr;
     }
 
-    if (1 == buf_info.iBufferStatus)
-    {
-        // 是一个完整的帧
-        std::shared_ptr<Yuv420p> yuv420p(new Yuv420p());
-        if (nullptr == yuv420p)
-        {
-            qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
-            return nullptr;
-        }
-
-        yuv420p->y.Build(data[0],
-                         buf_info.UsrData.sSystemBuffer.iWidth,
-                         buf_info.UsrData.sSystemBuffer.iHeight,
-                         buf_info.UsrData.sSystemBuffer.iStride[0]);
-
-        yuv420p->u.Build(data[1],
-                         buf_info.UsrData.sSystemBuffer.iWidth >> 1,
-                         buf_info.UsrData.sSystemBuffer.iHeight >> 1,
-                         buf_info.UsrData.sSystemBuffer.iStride[1]);
-
-        yuv420p->v.Build(data[2],
-                         buf_info.UsrData.sSystemBuffer.iWidth >> 1,
-                         buf_info.UsrData.sSystemBuffer.iHeight >> 1,
-                         buf_info.UsrData.sSystemBuffer.iStride[1]);
-
-        yuv420p.get()->flv_tag_idx = flv_tag_idx;
-        yuv420p.get()->pts = pts;
-        yuv420p.get()->end = false;
-
-        return yuv420p;
-    }
-    else
+    if (buf_info.iBufferStatus != 1)
     {
         return nullptr;
     }
+
+    // 是一个完整的帧
+    std::shared_ptr<Yuv420p> yuv420p(new Yuv420p());
+    if (nullptr == yuv420p)
+    {
+        qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
+        return nullptr;
+    }
+
+    yuv420p->y.Build(data[0],
+                     buf_info.UsrData.sSystemBuffer.iWidth,
+                     buf_info.UsrData.sSystemBuffer.iHeight,
+                     buf_info.UsrData.sSystemBuffer.iStride[0]);
+
+    yuv420p->u.Build(data[1],
+                     buf_info.UsrData.sSystemBuffer.iWidth >> 1,
+                     buf_info.UsrData.sSystemBuffer.iHeight >> 1,
+                     buf_info.UsrData.sSystemBuffer.iStride[1]);
+
+    yuv420p->v.Build(data[2],
+                     buf_info.UsrData.sSystemBuffer.iWidth >> 1,
+                     buf_info.UsrData.sSystemBuffer.iHeight >> 1,
+                     buf_info.UsrData.sSystemBuffer.iStride[1]);
+
+    yuv420p.get()->flv_tag_idx = flv_tag_idx;
+    yuv420p.get()->pts = pts;
+    yuv420p.get()->end = false;
+
+    return yuv420p;
 }
 
 std::shared_ptr<Yuv420p> H264Decoder::DecodeByFFMpeg(const unsigned char* media, int media_len, int flv_tag_idx, unsigned int pts)
@@ -362,23 +371,25 @@ std::shared_ptr<Yuv420p> H264Decoder::DecodeByFFMpeg(const unsigned char* media,
     {
         if (AVERROR(EAGAIN) == ret)
         {
-            qDebug() << __FILE__ << ":" << __LINE__ << "EAGAIN";
+            qDebug() << __FILE__ << ":" << __LINE__ << "EAGAIN" << ", flv tag idx: " << flv_tag_idx;
+
+            // TODO 读出所有的frame直到eof，然后重新send这个packet
         }
         else if (AVERROR_EOF == ret)
         {
-            qDebug() << __FILE__ << ":" << __LINE__ << "AVERROR_EOF";
+            qDebug() << __FILE__ << ":" << __LINE__ << "AVERROR_EOF" << ", flv tag idx: " << flv_tag_idx;
         }
         else if (AVERROR(EINVAL) == ret)
         {
-            qDebug() << __FILE__ << ":" << __LINE__ << "EINVAL";
+            qDebug() << __FILE__ << ":" << __LINE__ << "EINVAL" << ", flv tag idx: " << flv_tag_idx;
         }
         else if (AVERROR(ENOMEM) == ret)
         {
-            qDebug() << __FILE__ << ":" << __LINE__ << "ENOMEM";
+            qDebug() << __FILE__ << ":" << __LINE__ << "ENOMEM" << ", flv tag idx: " << flv_tag_idx;
         }
         else
         {
-            qDebug() << __FILE__ << ":" << __LINE__ << "avcodec_send_packet failed, err: " << ret;
+            qDebug() << __FILE__ << ":" << __LINE__ << "avcodec_send_packet failed, err: " << ret << ", flv tag idx: " << flv_tag_idx;
         }
 
         return nullptr;
@@ -391,69 +402,64 @@ std::shared_ptr<Yuv420p> H264Decoder::DecodeByFFMpeg(const unsigned char* media,
         return nullptr;
     }
 
-    ret = avcodec_receive_frame(codec_ctx_, frame);
-    if (ret != 0)
+    std::shared_ptr<Yuv420p> yuv420p;
+
+    do
     {
-        if (AVERROR(EAGAIN) == ret)
+        ret = avcodec_receive_frame(codec_ctx_, frame);
+        if (ret != 0)
         {
-            qDebug() << __FILE__ << ":" << __LINE__ << "EAGAIN";
-        }
-        else if (AVERROR_EOF == ret)
-        {
-            qDebug() << __FILE__ << ":" << __LINE__ << "AVERROR_EOF";
-        }
-        else if (AVERROR(EINVAL) == ret)
-        {
-            qDebug() << __FILE__ << ":" << __LINE__ << "EINVAL";
-        }
-        else
-        {
-            qDebug() << __FILE__ << ":" << __LINE__ << "avcodec_receive_frame fail, err: " << ret ;
+            if (AVERROR(EAGAIN) == ret)
+            {
+                qDebug() << __FILE__ << ":" << __LINE__ << "EAGAIN" << ", flv tag idx: " << flv_tag_idx;
+
+                // TODO 重新send packet
+            }
+            else if (AVERROR_EOF == ret)
+            {
+                qDebug() << __FILE__ << ":" << __LINE__ << "AVERROR_EOF" << ", flv tag idx: " << flv_tag_idx;
+
+                // TODO 表示后面没有frame了，不需要继续receive了。在解析音频时一个packet中可能有多个frame
+            }
+            else if (AVERROR(EINVAL) == ret)
+            {
+                qDebug() << __FILE__ << ":" << __LINE__ << "EINVAL" << ", flv tag idx: " << flv_tag_idx;
+            }
+            else
+            {
+                qDebug() << __FILE__ << ":" << __LINE__ << "avcodec_receive_frame fail, err: " << ret << ", flv tag idx: " << flv_tag_idx;
+            }
+
+            break;
         }
 
-        av_frame_free(&frame);
-        return nullptr;
-    }
-    else
-    {
-        if (frame->pts == AV_NOPTS_VALUE)
+        yuv420p.reset(new Yuv420p());
+        if (nullptr == yuv420p)
         {
-            qDebug() << __FILE__ << ":" << __LINE__ << "no pts value";
+            qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
+            break;
         }
-        else
-        {
-            qDebug() << __FILE__ << ":" << __LINE__ << "pts:" << frame->pts;
-        }
-    }
 
-    std::shared_ptr<Yuv420p> yuv420p(new Yuv420p());
-    if (nullptr == yuv420p)
-    {
-        qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
-        av_frame_free(&frame);
-        return nullptr;
-    }
+        yuv420p->y.Build(frame->data[0],
+                         frame->width,
+                         frame->height,
+                         frame->linesize[0]);
 
-    yuv420p->y.Build(frame->data[0],
-                     frame->width,
-                     frame->height,
-                     frame->linesize[0]);
+        yuv420p->u.Build(frame->data[1],
+                         frame->width >> 1,
+                         frame->height >> 1,
+                         frame->linesize[1]);
 
-    yuv420p->u.Build(frame->data[1],
-                     frame->width >> 1,
-                     frame->height >> 1,
-                     frame->linesize[1]);
+        yuv420p->v.Build(frame->data[2],
+                         frame->width >> 1,
+                         frame->height >> 1,
+                         frame->linesize[2]);
 
-    yuv420p->v.Build(frame->data[2],
-                     frame->width >> 1,
-                     frame->height >> 1,
-                     frame->linesize[2]);
-
-    yuv420p.get()->pts = pts;
-    yuv420p.get()->flv_tag_idx = flv_tag_idx;
-    yuv420p.get()->end = false;
+        yuv420p.get()->pts = pts;
+        yuv420p.get()->flv_tag_idx = flv_tag_idx;
+        yuv420p.get()->end = false;
+    } while (0);
 
     av_frame_free(&frame);
-
     return yuv420p;
 }

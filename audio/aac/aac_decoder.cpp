@@ -50,7 +50,6 @@ AACDecoder::AACDecoder()
 {
     fdkaac_dec_ = nullptr;
     codec_ctx_ = nullptr;
-    au_convert_ctx_ = nullptr;
     fdkaac_pcm_size_ = 0;
     aac_profile_ = 0;
     sample_rate_index_ = 0;
@@ -98,7 +97,6 @@ int AACDecoder::Initialize()
         return -1;
     }
 
-
     codec_ctx_->codec_type = AVMEDIA_TYPE_AUDIO;
     codec_ctx_->sample_rate = 44100;
     codec_ctx_->channels = 2;
@@ -110,8 +108,6 @@ int AACDecoder::Initialize()
         qDebug() << __FILE__ << ":" << __LINE__ << "avcodec_open2 failed";
         return -1;
     }
-
-    au_convert_ctx_ = nullptr;
 
     return 0;
 }
@@ -130,12 +126,6 @@ void AACDecoder::Finalize()
     {
         avcodec_free_context(&codec_ctx_);
         codec_ctx_ = nullptr;
-    }
-
-    if (au_convert_ctx_ != nullptr)
-    {
-        swr_close(au_convert_ctx_);
-        au_convert_ctx_ = nullptr;
     }
 }
 
@@ -164,23 +154,31 @@ void AACDecoder::OnFlvAacTagReady(std::shared_ptr<flv::AudioTag> flv_aac_tag)
         return;
     }
 
-    if (AUDIO_DECODER_FDKAAC == GLOBAL->config.GetAudioDecoderId())
-    {
-        std::vector<std::shared_ptr<Pcm>> pcm_vec = DecodeByFdkAac(media.get(), media_len, flv_aac_tag.get()->tag_idx, pts);
+    std::vector<std::shared_ptr<Pcm>> pcm_vec;
 
-        for (int i = 0; i < (int) pcm_vec.size(); ++i)
+    switch (GLOBAL->config.GetAudioDecoderId())
+    {
+        case AUDIO_DECODER_FDKAAC:
         {
-            emit SIGNAL_CENTER->PcmReady(pcm_vec[i]);
+            pcm_vec = DecodeByFdkAac(media.get(), media_len, flv_aac_tag.get()->tag_idx, pts);
         }
+        break;
+
+        case AUDIO_DECODER_FFMPEG:
+        {
+            pcm_vec = DecodeByFFMpeg(media.get(), media_len, flv_aac_tag.get()->tag_idx, pts);
+        }
+        break;
+
+        default:
+        {
+        }
+        break;
     }
-    else
-    {
-        std::shared_ptr<Pcm> pcm = DecodeByFFMpeg(media.get(), media_len, flv_aac_tag.get()->tag_idx, pts);
 
-        if (pcm != nullptr)
-        {
-            emit SIGNAL_CENTER->PcmReady(pcm);
-        }
+    for (int i = 0; i < (int) pcm_vec.size(); ++i)
+    {
+        emit SIGNAL_CENTER->PcmReady(pcm_vec[i]);
     }
 }
 
@@ -221,7 +219,7 @@ std::unique_ptr<unsigned char[]> AACDecoder::ParseRawAAC(int& media_len, std::sh
     media_len = 7 + data_size;
 
     std::unique_ptr<unsigned char[]> media(new unsigned char[media_len]);
-    if (NULL == media)
+    if (nullptr == media)
     {
         qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
         return nullptr;
@@ -248,6 +246,7 @@ std::unique_ptr<unsigned char[]> AACDecoder::ParseRawAAC(int& media_len, std::sh
 std::vector<std::shared_ptr<Pcm>> AACDecoder::DecodeByFdkAac(const unsigned char* media, int media_len, int flv_tag_idx, unsigned int pts)
 {
     std::vector<std::shared_ptr<Pcm>> pcm_vec;
+
     char* aac_buf = (char*) media;
     const int aac_size = media_len;
     int pos = 0;
@@ -307,7 +306,7 @@ std::vector<std::shared_ptr<Pcm>> AACDecoder::DecodeByFdkAac(const unsigned char
         }
 
         std::shared_ptr<Pcm> pcm(new Pcm());
-        if (NULL == pcm)
+        if (nullptr == pcm)
         {
             qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
             return pcm_vec;
@@ -324,8 +323,10 @@ std::vector<std::shared_ptr<Pcm>> AACDecoder::DecodeByFdkAac(const unsigned char
     return pcm_vec;
 }
 
-std::shared_ptr<Pcm> AACDecoder::DecodeByFFMpeg(const unsigned char* media, int media_len, int flv_tag_idx, unsigned int pts)
+std::vector<std::shared_ptr<Pcm>> AACDecoder::DecodeByFFMpeg(const unsigned char* media, int media_len, int flv_tag_idx, unsigned int pts)
 {
+    std::vector<std::shared_ptr<Pcm>> pcm_vec;
+
     AVPacket packet;
     av_init_packet(&packet);
 
@@ -337,132 +338,126 @@ std::shared_ptr<Pcm> AACDecoder::DecodeByFFMpeg(const unsigned char* media, int 
     {
         if (AVERROR(EAGAIN) == ret)
         {
-            qDebug() << __FILE__ << ":" << __LINE__ << "EAGAIN";
+            qDebug() << __FILE__ << ":" << __LINE__ << "EAGAIN" << ", flv tag idx: " << flv_tag_idx;
         }
         else if (AVERROR_EOF == ret)
         {
-            qDebug() << __FILE__ << ":" << __LINE__ << "AVERROR_EOF";
+            qDebug() << __FILE__ << ":" << __LINE__ << "AVERROR_EOF" << ", flv tag idx: " << flv_tag_idx;
         }
         else if (AVERROR(EINVAL) == ret)
         {
-            qDebug() << __FILE__ << ":" << __LINE__ << "EINVAL";
+            qDebug() << __FILE__ << ":" << __LINE__ << "EINVAL" << ", flv tag idx: " << flv_tag_idx;
         }
         else if (AVERROR(ENOMEM) == ret)
         {
-            qDebug() << __FILE__ << ":" << __LINE__ << "ENOMEM";
+            qDebug() << __FILE__ << ":" << __LINE__ << "ENOMEM" << ", flv tag idx: " << flv_tag_idx;
         }
         else
         {
-            qDebug() << "avcodec_send_packet failed, err: " << ret;
+            qDebug() << "avcodec_send_packet failed, err: " << ret << ", flv tag idx: " << flv_tag_idx;
         }
 
-        return nullptr;
+        return pcm_vec;
     }
 
     AVFrame* frame = av_frame_alloc();
     if (nullptr == frame)
     {
         qDebug() << "av_frame_alloc failed";
-        return nullptr;
+        return pcm_vec;
     }
 
-    ret = avcodec_receive_frame(codec_ctx_, frame);
-    if (ret != 0)
+    struct SwrContext* swr_ctx = nullptr;
+    uint8_t* data = nullptr;
+
+    do
     {
-        if (AVERROR(EAGAIN) == ret)
-        {
-            qDebug() << __FILE__ << ":" << __LINE__ << "EAGAIN";
-        }
-        else if (AVERROR_EOF == ret)
-        {
-            qDebug() << __FILE__ << ":" << __LINE__ << "AVERROR_EOF";
-        }
-        else if (AVERROR(EINVAL) == ret)
-        {
-            qDebug() << __FILE__ << ":" << __LINE__ << "EINVAL";
-        }
-        else
-        {
-            qDebug() << "avcodec_receive_frame failed, err: " << ret ;
-        }
-
-        av_frame_free(&frame);
-        return nullptr;
-    }
-
-    if (nullptr == au_convert_ctx_)
-    {
-        au_convert_ctx_ = swr_alloc(); // TODO 这里有内存泄露，初始化移到Initialize中去
-
-        int64_t channels_layout = av_get_default_channel_layout(frame->channels);
-        AVSampleFormat out_fmt = AV_SAMPLE_FMT_S16;
-
-        au_convert_ctx_ = swr_alloc_set_opts(au_convert_ctx_,
-                                             channels_layout, out_fmt, frame->sample_rate,
-                                             av_get_default_channel_layout(frame->channels),
-                                             codec_ctx_->sample_fmt,
-                                             codec_ctx_->sample_rate,
-                                             0, NULL);
-        if (nullptr == au_convert_ctx_)
-        {
-            qDebug() << "swr_alloc_set_opts failed";
-            av_frame_free(&frame);
-            return nullptr;
-        }
-
-        ret = swr_init(au_convert_ctx_);
+        ret = avcodec_receive_frame(codec_ctx_, frame);
         if (ret != 0)
         {
-            qDebug() << "swr_init failed";
-            av_frame_free(&frame);
-            return nullptr;
+            if (AVERROR(EAGAIN) == ret)
+            {
+                qDebug() << __FILE__ << ":" << __LINE__ << "EAGAIN" << ", flv tag idx: " << flv_tag_idx;
+            }
+            else if (AVERROR_EOF == ret)
+            {
+                qDebug() << __FILE__ << ":" << __LINE__ << "AVERROR_EOF" << ", flv tag idx: " << flv_tag_idx;
+            }
+            else if (AVERROR(EINVAL) == ret)
+            {
+                qDebug() << __FILE__ << ":" << __LINE__ << "EINVAL" << ", flv tag idx: " << flv_tag_idx;
+            }
+            else
+            {
+                qDebug() << "avcodec_receive_frame failed, err: " << ret << ", flv tag idx: " << flv_tag_idx;
+            }
+
+            break;
         }
-    }
 
-    uint8_t* out_data = (uint8_t*) malloc(MAX_AUDIO_FRAME_SIZE * 2);
-    if (nullptr == out_data)
+        swr_ctx = swr_alloc_set_opts(nullptr,
+                                     av_get_default_channel_layout(frame->channels),
+                                     AV_SAMPLE_FMT_S16,
+                                     frame->sample_rate,
+                                     av_get_default_channel_layout(frame->channels),
+                                     codec_ctx_->sample_fmt,
+                                     codec_ctx_->sample_rate,
+                                     0, nullptr);
+        if (nullptr == swr_ctx)
+        {
+            qDebug() << "swr_alloc_set_opts failed";
+            break;
+        }
+
+        ret = swr_init(swr_ctx);
+        if (ret < 0)
+        {
+            qDebug() << "swr_init failed, err: " << AVERROR(ret);
+            break;
+        }
+
+        uint8_t* data = (uint8_t*) malloc(MAX_AUDIO_FRAME_SIZE * 2);
+        if (nullptr == data)
+        {
+            qDebug() << "failed to alloc memory";
+            break;
+        }
+
+        if (swr_convert(swr_ctx,
+                        &data, swr_get_out_samples(swr_ctx, frame->nb_samples),
+                        (const uint8_t**) (frame->data), frame->nb_samples) < 0)
+        {
+            qDebug() << "swr_convert failed";
+            break;
+        }
+
+        const int size = av_samples_get_buffer_size(nullptr, 2, frame->nb_samples, AV_SAMPLE_FMT_S16, 1);
+
+        std::shared_ptr<Pcm> pcm(new Pcm());
+        if (nullptr == pcm)
+        {
+            qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
+            break;
+        }
+
+        pcm->Build((const unsigned char*) data, size);
+
+        pcm.get()->flv_tag_idx = flv_tag_idx;
+        pcm.get()->pts = pts;
+
+        pcm_vec.push_back(pcm);
+    } while (0);
+
+    if (data != nullptr)
     {
-        qDebug() << "failed to alloc memory";
-        av_frame_free(&frame);
-        return nullptr;
+        free(data);
     }
 
-    if (swr_convert(au_convert_ctx_, &out_data,
-                    swr_get_out_samples(au_convert_ctx_, frame->nb_samples),
-                    (const uint8_t**) (frame->data), frame->nb_samples) < 0)
+    if (swr_ctx != nullptr)
     {
-        qDebug() << "swr_convert failed";
-        free(out_data);
-        av_frame_free(&frame);
-        return nullptr;
+        swr_free(&swr_ctx);
     }
 
-    if (swr_convert(au_convert_ctx_, &out_data, MAX_AUDIO_FRAME_SIZE,
-                    (const uint8_t**) frame->data, frame->nb_samples) < 0)
-    {
-        qDebug() << "swr_convert failed";
-        free(out_data);
-        av_frame_free(&frame);
-        return nullptr;
-    }
-
-    const int out_data_size = av_samples_get_buffer_size(NULL, 2, frame->nb_samples,
-                              AV_SAMPLE_FMT_S16, 1);
     av_frame_free(&frame);
-
-    std::shared_ptr<Pcm> pcm(new Pcm());
-    if (NULL == pcm)
-    {
-        qDebug() << __FILE__ << ":" << __LINE__ << "failed to alloc memory";
-        free(out_data);
-        return nullptr;
-    }
-
-    pcm->Build((const unsigned char*) out_data, out_data_size);
-
-    pcm.get()->flv_tag_idx = flv_tag_idx;
-    pcm.get()->pts = pts;
-
-    free(out_data);
-    return pcm;
+    return pcm_vec;
 }

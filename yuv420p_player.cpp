@@ -92,15 +92,15 @@ void Yuv420pPlayer::OnTimer()
             if (delta > 200) // TODO
             {
                 // 视频太快了，要减速
-                qDebug() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx
-                         << "video should be slower, delta: " << delta;
+//                qWarning() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx
+//                         << "video should be slower, delta: " << delta;
 
                 current.duration += 50; // TODO 其它步进值或策略
             }
             else if (delta < -200) // TODO
             {
-                qDebug() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx
-                         << "video should be faster, delta: " << delta;
+//                qWarning() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx
+//                         << "video should be faster, delta: " << delta;
 
                 current.duration -= 50; // TODO
                 if (current.duration < 0)
@@ -110,7 +110,7 @@ void Yuv420pPlayer::OnTimer()
             }
             else
             {
-//                qDebug() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx << ", delta: " << delta;
+//                qInfo() << __FILE__ << ":" << __LINE__ << "flv tag idx: " << current.yuv420p.get()->flv_tag_idx << ", delta: " << delta;
             }
 
             if (now >= current.play_time + current.duration)
