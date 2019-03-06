@@ -416,7 +416,7 @@ std::vector<std::shared_ptr<Pcm>> AACDecoder::DecodeByFFMpeg(const unsigned char
             break;
         }
 
-        uint8_t* data = (uint8_t*) malloc(MAX_AUDIO_FRAME_SIZE * 2);
+        data = (uint8_t*) malloc(MAX_AUDIO_FRAME_SIZE * 2);
         if (nullptr == data)
         {
             qDebug() << "failed to alloc memory";
