@@ -396,9 +396,9 @@ std::vector<std::shared_ptr<Pcm>> AACDecoder::DecodeByFFMpeg(const unsigned char
         }
 
         swr_ctx = swr_alloc_set_opts(nullptr,
-                                     av_get_default_channel_layout(frame->channels),
+                                     AV_CH_LAYOUT_STEREO,
                                      AV_SAMPLE_FMT_S16,
-                                     frame->sample_rate,
+                                     44100,
                                      av_get_default_channel_layout(frame->channels),
                                      codec_ctx_->sample_fmt,
                                      codec_ctx_->sample_rate,

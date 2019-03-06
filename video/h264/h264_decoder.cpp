@@ -168,6 +168,10 @@ void H264Decoder::OnFlvH264TagReady(std::shared_ptr<flv::VideoTag> flv_h264_tag)
     {
         emit SIGNAL_CENTER->Yuv420pReady(yuv420p);
     }
+    else
+    {
+        qDebug() << "frame type: " << flv_h264_tag.get()->frame_type;
+    }
 }
 
 std::unique_ptr<unsigned char[]> H264Decoder::ParseAVCDecorderConfigurationRecord(int& media_len, std::shared_ptr<flv::VideoTag> flv_h264_tag)
