@@ -1,7 +1,7 @@
 ﻿#include "h264_decoder.h"
 #include <QDebug>
 #include <QThread>
-#include <qsystemdetection.h>
+#include <QSysInfo>
 #include "byte_util.h"
 #include "signal_center.h"
 #include "global.h"
@@ -11,22 +11,21 @@
 //0x4000    0x34            0x12
 //0x4001    0x12            0x34
 
-#if defined(Q_OS_WIN)
-// TODO
-static const unsigned int H264_START_CODE = 0x01000000; // 本机是小端，在内存中就是00000001，也就是nalu的4字节起始码
-#elif defined(Q_OS_LINUX)
-#if LITTLE_ENDIAN
-static const unsigned int H264_START_CODE = 0x01000000; // 本机是小端，在内存中就是00000001，也就是nalu的4字节起始码
-#else
-static const unsigned int H264_START_CODE = 0x00000001;
-#endif
-#endif
-
-H264Decoder::H264Decoder() : vjj_sei_vec_()
+H264Decoder::H264Decoder() : sei_vec_()
 {
     decoder_ = nullptr;
     codec_ctx_ = nullptr;
     nalu_len_size_ = 0;
+
+    if (QSysInfo::LittleEndian == QSysInfo::ByteOrder)
+    {
+        // 本机是小端，在内存中就是00000001，也就是nalu的4字节起始码
+        h264_start_code_ = 0x01000000;
+    }
+    else
+    {
+        h264_start_code_ = 0x00000001;
+    }
 }
 
 H264Decoder::~H264Decoder()
@@ -82,9 +81,9 @@ int H264Decoder::Initialize()
 
 void H264Decoder::Finalize()
 {
-    for (int i = 0; i < (int) vjj_sei_vec_.size(); i++)
+    for (auto& sei : sei_vec_)
     {
-        delete vjj_sei_vec_[i].szUD;
+        delete [] sei.data;
     }
 
     // openh264
@@ -213,9 +212,9 @@ std::unique_ptr<unsigned char[]> H264Decoder::ParseAVCDecorderConfigurationRecor
     }
 
     unsigned char* data = media.get();
-    memcpy(data, &H264_START_CODE, 4);
+    memcpy(data, &h264_start_code_, 4);
     memcpy(data + 4, pd + 11 + 2, sps_size);
-    memcpy(data + 4 + sps_size, &H264_START_CODE, 4);
+    memcpy(data + 4 + sps_size, &h264_start_code_, 4);
     memcpy(data + 4 + sps_size + 4, pd + 11 + 2 + sps_size + 2 + 1, pps_size);
 
     return media;
@@ -272,7 +271,7 @@ std::unique_ptr<unsigned char[]> H264Decoder::ParseNalus(int& media_len, std::sh
             break;
         }
 
-        memcpy(data + media_len, &H264_START_CODE, 4);
+        memcpy(data + media_len, &h264_start_code_, 4);
         memcpy(data + media_len + 4, pd + offset + nalu_len_size, nalu_Len);
         ParseSEI(data + media_len, 4 + nalu_Len, flv_h264_tag.get()->dts);
         media_len += (4 + nalu_Len);
@@ -284,38 +283,64 @@ std::unique_ptr<unsigned char[]> H264Decoder::ParseNalus(int& media_len, std::sh
 
 void H264Decoder::ParseSEI(unsigned char* nalu, int nalu_len, int dts)
 {
-    // 起始码之后的一个字节是nal header，值和含义如下：
-    // "0x06"，此时NRI为"00B"，NAL unit type为SEI类型。
-    // “0x67”，此时NRI为“11B”，NAL unit type为SPS类型。
-    // “0x68”，此时NRI为“11B”，NAL unit type为PPS类型。
-    // “0x65”，此时NRI为“11B”，NAL unit type为IDR图像。
-    if (nalu[4] != 0x06 || nalu[5] != 0x05) // "0x06"后一个字节为“0x05”，是SEI payload type，表示自定义消息
+    // https://blog.csdn.net/yangzhongxuan/article/details/8003494
+    // https://blog.csdn.net/u010925568/article/details/75040492
+    // https://www.jianshu.com/p/d28e25ae339e
+
+    // 起始码之后的一个字节是nal header，结构：
+    // forbidden_bit(1bit) + nal_reference_bit(2bit) + nal_unit_type(5bit)
+    // 1.forbidden_bit： 禁止位，初始为0，当网络发现NAL单元有比特错误时可设置该比特为1，以便接收方纠错或丢掉该单元。
+    // 2.nal_reference_bit： nal重要性指示，标志该NAL单元的重要性，值越大，越重要，解码器在解码处理不过来的时候，可以丢掉重要性为0的NALU。
+    // 3. nal unit type:
+    // "0x05"，NAL unit type为IDR图像。
+    // "0x06"，NAL unit type为SEI类型。
+    // "0x07"，NAL unit type为SPS类型。
+    // "0x08"，NAL unit type为PPS类型。
+
+    //IDR帧就是I帧，但是I帧不一定是IDR帧，在一个完整的视频流单元中第一个图像帧是IDR帧，IDR帧是强制刷新帧，在解码过程中，当出现了IDR帧时，要更新sps、pps，原因是防止前面I帧错误，导致sps，pps参考I帧导致无法纠正。
+    //GOP的全称是Group of picture图像组，也就是两个I帧之间的距离，GOP值越大，那么I帧率之间P帧和B帧数量越多，图像画质越精细，如果GOP是120，如果分辨率是720P，帧率是60，那么两I帧的时间就是120/60=2s.
+
+    //自定义sei帧结构：|h264 start code(32)|nal header(8)|sei payload type(8)|...0xff|uuid(128)|payload(n)|
+    if ((nalu[4] & 0x1f) != 0x06 || nalu[5] != 0x05) // "0x06"后一个字节为"0x05"，是SEI payload type，表示自定义消息。但是要注意的是：在H.264/AVC视频编码标准中，并没有规定SEI payload type的范围，所以表征payload type的字节数是浮动的。所以要解析其他类型的SEI，需要持续读取8bit，直到非0xff为止，然后把读取的数值累加，累加值即为SEI payload type
     {
         return;
     }
 
-    // TODO https://blog.csdn.net/y601500359/article/details/80943990
+    const unsigned char* pd = nalu + 4 + 2; // h264 start code占4字节，nal header占1字节，SEI payload type占1字节
 
-    unsigned char* pd = nalu + 4 + 2;
+    // 接着的字节是payload size。读取SEI payload size和payload type逻辑类似，仍然是读取到0xff为止，这样可以支持任意长度的SEI payload添加。
     while (*pd++ == 0xff);
 
-    const char* videojj_uuid = "VideojjLeonUUID";
-    const char* p = (char*) pd;
+    // 接着的16个字节是uuid。这里可以比较一下是不是期望的uuid
+    //FFMPEG uuid
+    static unsigned char uuid[] = { 0xdc, 0x45, 0xe9, 0xbd, 0xe6, 0xd9, 0x48, 0xb7, 0x96, 0x2c, 0xd8, 0x20, 0xd9, 0x23, 0xee, 0xef };
+    //self UUID
+//    static unsigned char uuid[] = { 0x54, 0x80, 0x83, 0x97, 0xf0, 0x23, 0x47, 0x4b, 0xb7, 0xf7, 0x4f, 0x32, 0xb5, 0x4e, 0x06, 0xac };
 
-    for (int i = 0; i < (int) strlen(videojj_uuid); i++)
+    for (int i = 0; i < 16; ++i)
     {
-        if (p[i] != videojj_uuid[i])
+        if (pd[i] != uuid[i])
         {
+            qDebug() << "sei uuid not match";
             return;
         }
     }
 
-    VjjSEI sei;
-    sei.nTimeStamp = dts;
-    sei.nLen = nalu_len - (p - (char*) nalu) - 16 - 1;
-    sei.szUD = new char[sei.nLen];
-    memcpy(sei.szUD, p + 16, sei.nLen);
-    vjj_sei_vec_.push_back(sei);
+    // 接着的字节是payload
+    SEI sei;
+    sei.timestamp = dts;
+    memcpy(sei.uuid, pd, 16);
+    sei.len = nalu_len - (pd - nalu) - 16 - 1; // 最后一个1是结尾的'\0'
+
+    sei.data = new char[sei.len];
+    if (nullptr == sei.data)
+    {
+        qDebug() << "failed to alloc memory";
+        return;
+    }
+
+    memcpy(sei.data, pd + 16, sei.len);
+    sei_vec_.push_back(sei);
 }
 
 std::shared_ptr<Yuv420p> H264Decoder::DecodeByOpenH264(const unsigned char* media, int media_len, int flv_tag_idx, unsigned int pts)
@@ -376,7 +401,7 @@ std::shared_ptr<Yuv420p> H264Decoder::DecodeByFFMpeg(const unsigned char* media,
     packet.data = (uint8_t*) media;
     packet.size = media_len;
 
-    int ret = avcodec_send_packet(codec_ctx_, &packet);
+    int ret = avcodec_send_packet(codec_ctx_, &packet); // 解第一个视频帧会报no frame TODO
     if (ret != 0)
     {
         if (AVERROR(EAGAIN) == ret)
