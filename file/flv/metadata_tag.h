@@ -25,22 +25,22 @@ namespace flv
 {
 struct MetadataTag : public Tag, public std::enable_shared_from_this<MetadataTag>
 {
-    double duration;
-    double width;
-    double height;
-    double videodatarate;
-    double framerate;
-    double videocodecid;
-    double audiodatarate;
-    double audiosamplerate;
-    double audiosamplesize;
-    bool stereo; // 立体声
-    double audiocodecid;
+    double duration; // 时长
+    double width; // 视频宽度
+    double height; // 视频高度
+    double videodatarate; // 视频码率（比特率）
+    double framerate; // 视频帧率（fps）
+    double videocodecid; // 视频编码
+    double audiodatarate; // 音频码率
+    double audiosamplerate; // 音频采样率
+    double audiosamplesize; // 音频采样精度
+    bool stereo; // 是否为立体声
+    double audiocodecid; // 音频编码
     std::string major_brand;
     std::string minor_version;
     std::string compatible_brands;
     std::string encoder;
-    double filesize;
+    double filesize; // 文件大小
 
     MetadataTag() : major_brand(), minor_version(), compatible_brands(), encoder()
     {
@@ -64,6 +64,7 @@ struct MetadataTag : public Tag, public std::enable_shared_from_this<MetadataTag
 
 private:
     int ParseECMAArray(const unsigned char* metadata);
+    void Print();
 };
 }
 

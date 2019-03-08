@@ -36,6 +36,7 @@ int MetadataTag::Build(int tag_idx, const TagHead& tag_head, const unsigned char
         break;
     }
 
+    Print();
     return 0;
 }
 
@@ -181,5 +182,25 @@ int MetadataTag::ParseECMAArray(const unsigned char* metadata)
     }
 
     return 0;
+}
+
+void MetadataTag::Print()
+{
+    qDebug() << "duration:" <<  duration
+             << "width:" << width
+             << "height:" << height
+             << "videodatarate:" << videodatarate
+             << "framerate:" << framerate
+             << "videocodecid:" << videocodecid
+             << "audiodatarate:" << audiodatarate
+             << "audiosamplerate:" << audiosamplerate
+             << "audiosamplesize:" << audiosamplesize
+             << "stereo:" << stereo
+             << "audiocodecid:" << audiocodecid
+             << "major_brand:" << QString::fromStdString(major_brand)
+             << "minor_version:" << QString::fromStdString(minor_version)
+             << "compatible_brands:" << QString::fromStdString(compatible_brands)
+             << "encoder:" << QString::fromStdString(encoder)
+             << "filesize:" << filesize;
 }
 }

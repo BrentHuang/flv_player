@@ -1,6 +1,7 @@
 ﻿#include "h264_decoder.h"
 #include <QDebug>
 #include <QThread>
+#include <qsystemdetection.h>
 #include "byte_util.h"
 #include "signal_center.h"
 #include "global.h"
@@ -10,10 +11,15 @@
 //0x4000    0x34            0x12
 //0x4001    0x12            0x34
 
+#if defined(Q_OS_WIN)
+// TODO
+static const unsigned int H264_START_CODE = 0x01000000; // 本机是小端，在内存中就是00000001，也就是nalu的4字节起始码
+#elif defined(Q_OS_LINUX)
 #if LITTLE_ENDIAN
 static const unsigned int H264_START_CODE = 0x01000000; // 本机是小端，在内存中就是00000001，也就是nalu的4字节起始码
 #else
 static const unsigned int H264_START_CODE = 0x00000001;
+#endif
 #endif
 
 H264Decoder::H264Decoder() : vjj_sei_vec_()
