@@ -101,7 +101,6 @@ int AACDecoder::Initialize()
     codec_ctx_->sample_rate = 44100;
     codec_ctx_->channels = 2;
     codec_ctx_->bit_rate = 16;
-    codec_ctx_->sample_fmt = AV_SAMPLE_FMT_S16;
 
     if (avcodec_open2(codec_ctx_, codec, NULL) < 0)
     {
@@ -416,7 +415,7 @@ std::vector<std::shared_ptr<Pcm>> AACDecoder::DecodeByFFMpeg(const unsigned char
             break;
         }
 
-        data = (uint8_t*) malloc(MAX_AUDIO_FRAME_SIZE * 2);
+        data = (uint8_t*) malloc(MAX_AUDIO_FRAME_SIZE * 2); // *2表示双声道
         if (nullptr == data)
         {
             qDebug() << "failed to alloc memory";
@@ -432,6 +431,11 @@ std::vector<std::shared_ptr<Pcm>> AACDecoder::DecodeByFFMpeg(const unsigned char
         }
 
         const int size = av_samples_get_buffer_size(nullptr, 2, frame->nb_samples, AV_SAMPLE_FMT_S16, 1);
+        if (size < 0)
+        {
+            qDebug() << "swr_convert failed";
+            break;
+        }
 
         std::shared_ptr<Pcm> pcm(new Pcm());
         if (nullptr == pcm)

@@ -68,6 +68,7 @@ int H264Decoder::Initialize()
         return -1;
     }
 
+    codec_ctx_->codec_type = AVMEDIA_TYPE_VIDEO;
     codec_ctx_->pix_fmt = AV_PIX_FMT_YUV420P;
 
     if (avcodec_open2(codec_ctx_, codec, nullptr) < 0)
