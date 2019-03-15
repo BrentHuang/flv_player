@@ -1,4 +1,4 @@
-#include "yuv420p_render.h"
+﻿#include "yuv420p_render.h"
 #include <QThread>
 
 static const GLfloat vertex_vertices[] =

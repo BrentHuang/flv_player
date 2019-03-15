@@ -1,4 +1,4 @@
-#ifndef FLV_BASE_H
+﻿#ifndef FLV_BASE_H
 #define FLV_BASE_H
 
 #include <string>

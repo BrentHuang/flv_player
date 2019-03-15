@@ -1,4 +1,4 @@
-#ifndef H264_DECODER_H
+﻿#ifndef H264_DECODER_H
 #define H264_DECODER_H
 
 #include <vector>

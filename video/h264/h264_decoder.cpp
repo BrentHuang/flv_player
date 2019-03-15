@@ -1,4 +1,4 @@
-#include "h264_decoder.h"
+﻿#include "h264_decoder.h"
 #include <QDebug>
 #include <QThread>
 #include <QSysInfo>

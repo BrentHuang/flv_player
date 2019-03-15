@@ -1,4 +1,4 @@
-#include "metadata_tag.h"
+﻿#include "metadata_tag.h"
 #include <QDebug>
 #include "byte_util.h"
 #include "signal_center.h"
