@@ -1,4 +1,4 @@
-﻿#include "flv_base.h"
+#include "flv_base.h"
 #include <QDebug>
 #include "byte_util.h"
 

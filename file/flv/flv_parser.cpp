@@ -1,4 +1,4 @@
-﻿#include "flv_parser.h"
+#include "flv_parser.h"
 #include <fstream>
 #include <iostream>
 #include <QDebug>

@@ -29,12 +29,17 @@ QMAKE_CXXFLAGS_RELEASE = $$QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO
 QMAKE_LFLAGS_RELEASE = $$QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO
 
 win32 {
-    THIRD_PARTY_INSTALL_PREFIX = D:
+    THIRD_PARTY_INSTALL_PREFIX = D:/third_party
 
     INCLUDEPATH += $${THIRD_PARTY_INSTALL_PREFIX}/fdk-aac/include \
-        $${THIRD_PARTY_INSTALL_PREFIX}/openh264/include
+        $${THIRD_PARTY_INSTALL_PREFIX}/openh264/include \
+        $${THIRD_PARTY_INSTALL_PREFIX}/ffmpeg-4.1.1-win32-dev/include
+
     LIBS += -L$${THIRD_PARTY_INSTALL_PREFIX}/fdk-aac/lib -llibfdk-aac-2 \
-        -L$${THIRD_PARTY_INSTALL_PREFIX}/openh264/lib -lopenh264
+        -L$${THIRD_PARTY_INSTALL_PREFIX}/openh264/lib -lopenh264 \
+        -L$${THIRD_PARTY_INSTALL_PREFIX}/ffmpeg-4.1.1-win32-dev/lib -lavcodec \
+        -L$${THIRD_PARTY_INSTALL_PREFIX}/ffmpeg-4.1.1-win32-dev/lib -lavutil \
+        -L$${THIRD_PARTY_INSTALL_PREFIX}/ffmpeg-4.1.1-win32-dev/lib -lswresample
 }
 
 macx {
@@ -51,6 +56,7 @@ unix:!macx {
     INCLUDEPATH += $${THIRD_PARTY_INSTALL_PREFIX}/fdk_aac/include \
         $${THIRD_PARTY_INSTALL_PREFIX}/openh264/include \
         $${THIRD_PARTY_INSTALL_PREFIX}/ffmpeg/include
+
     LIBS += -L$${THIRD_PARTY_INSTALL_PREFIX}/fdk_aac/lib -lfdk-aac \
         -L$${THIRD_PARTY_INSTALL_PREFIX}/openh264/lib -lopenh264 \
         -L$${THIRD_PARTY_INSTALL_PREFIX}/ffmpeg/lib -lavcodec \

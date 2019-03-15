@@ -1,4 +1,4 @@
-﻿#include "yuv420p_player.h"
+#include "yuv420p_player.h"
 #include <QDebug>
 #include <QThread>
 #include "signal_center.h"

@@ -1,4 +1,4 @@
-﻿#ifndef BYTE_UTIL_H
+#ifndef BYTE_UTIL_H
 #define BYTE_UTIL_H
 
 #include <stdint.h>

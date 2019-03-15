@@ -1,4 +1,4 @@
-﻿#ifndef AUDIO_TAG_H
+#ifndef AUDIO_TAG_H
 #define AUDIO_TAG_H
 
 #include <memory>

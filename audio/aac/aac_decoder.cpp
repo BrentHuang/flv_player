@@ -1,4 +1,4 @@
-﻿#include "aac_decoder.h"
+#include "aac_decoder.h"
 #include <QDebug>
 #include <QThread>
 

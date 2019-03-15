@@ -1,4 +1,4 @@
-﻿#include "video_tag.h"
+#include "video_tag.h"
 #include <QDebug>
 #include "signal_center.h"
 

@@ -1,4 +1,4 @@
-﻿#include "pcm_device.h"
+#include "pcm_device.h"
 #include <QDebug>
 #include <QThread>
 #include <QMutexLocker>

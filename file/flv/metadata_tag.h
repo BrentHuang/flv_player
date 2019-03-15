@@ -1,4 +1,4 @@
-﻿#ifndef METADATA_TAG_H
+#ifndef METADATA_TAG_H
 #define METADATA_TAG_H
 
 #include <memory>
