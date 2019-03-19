@@ -46,6 +46,7 @@ void MainWindow::StartThreads()
 {
     qDebug() << __FILE__ << ":" << __LINE__ << "MainWindow::StartThreads() " << QThread::currentThreadId();
 
+    // TODO 可以把启动文件解析和解码线程放到打开文件的时候
     file_parsers_ = new FileParsers();
     file_parsers_->moveToThread(&file_parse_thread_);
     connect(&file_parse_thread_, SIGNAL(finished()), file_parsers_, SLOT(deleteLater()));
